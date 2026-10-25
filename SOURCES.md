@@ -57,6 +57,7 @@ The public documentation each skill was written from, as the page title and its 
 ## iam-least-privilege-review
 
 - [Policy evaluation logic](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html), AWS Identity and Access Management
+- [How AWS enforcement code logic evaluates requests to allow or deny access](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic_policy-eval-denyallow.html), AWS Identity and Access Management
 - [AWS JSON policy elements: Principal](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_principal.html), AWS Identity and Access Management
 - [IAM JSON policy elements: Resource](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_resource.html), AWS Identity and Access Management
 - [AWS global condition context keys](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html), AWS Identity and Access Management
@@ -87,11 +88,14 @@ The public documentation each skill was written from, as the page title and its 
 - [Managing environments for deployment](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments), GitHub Actions
 - [Troubleshooting required status checks](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks), GitHub
 - [Troubleshooting rules](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/troubleshooting-rules), GitHub
+- [About protected branches](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches), GitHub
 - [Managing a merge queue](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue), GitHub
 - [Caching in GitLab CI/CD](https://docs.gitlab.com/ci/caching/), GitLab
 - [CI/CD variables](https://docs.gitlab.com/ci/variables/), GitLab
 - [Protected environments](https://docs.gitlab.com/ci/environments/protected_environments/), GitLab
 - [CI/CD YAML syntax reference](https://docs.gitlab.com/ci/yaml/), GitLab
+- [glab ci get](https://docs.gitlab.com/cli/ci/get/), GitLab CLI
+- [glab ci view](https://docs.gitlab.com/cli/ci/view/), GitLab CLI
 - [npm-ci](https://docs.npmjs.com/cli/v11/commands/npm-ci/), npm
 - [Secure installs](https://pip.pypa.io/en/stable/topics/secure-installs/), pip
 - [Explicit Locking](https://www.postgresql.org/docs/current/explicit-locking.html), PostgreSQL

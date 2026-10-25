@@ -16,17 +16,17 @@ A pipeline is part of the system's controls: its tests, scans, required checks, 
 - Read the log from the first error, not from the last line; the final message is often a consequence. Note the step, the command, the exit code and the exact message.
 - Compare with the last green run of the same workflow: what changed in the commit, the workflow file, the runner image (`ubuntu-latest` moves), action and tool versions, the lock file, base images, secrets and variables, and repository settings such as branch protection, rulesets and environments.
 - Classify the failure: a real regression in the code; a flaky test (fails and passes on the same commit); the environment (runner image, tool version, an unpinned dependency, network, rate limits); the configuration (YAML, job names, `needs`, `if` and `rules`, path filters); permissions (token scopes, protected variables, fork restrictions); or integrity (checksum, signature or lock file hash).
-- Treat an integrity failure as possible tampering until shown otherwise. A released version's file should never change. Compare it with the checksum or signature its original publisher released, find out who changed the copy you download (mirror, proxy, cache), and never take the new pin value from the same source that served the changed file. Changing a pin is right only for a deliberate upgrade checked against the publisher.
+- Treat a checksum or signature failure as possible tampering, not a value to update. A released version's file never changes, at its publisher or at a copy, so a new checksum for the same version is itself the incident: check what the publisher released and how the copy you download (mirror, proxy, cache) came to differ, and never take a new value from the source that served the changed file. Change a pin only to move deliberately to a new version, checked against its publisher.
 
 ## Fix without weakening
 
-Do not make a failure go away by skipping, deleting or marking tests as expected to fail; setting `continue-on-error: true` or `allow_failure: true` on a required job; dropping a job from `needs`; lowering a coverage, severity or quality threshold; committing with `--no-verify`; removing a checksum, signature or scan step; replacing a pinned SHA or digest with a tag, a branch or `latest`; widening `permissions` to write-all; or merging past branch protection with an admin override or removing a required check. A truly flaky test is fixed, or quarantined with its owner's approval and a tracking issue, never silenced to get a release out.
+Do not make a failure go away by skipping, deleting or marking tests as expected to fail; setting `continue-on-error: true` or `allow_failure: true` on a required job; dropping a job from `needs`; lowering a coverage, severity or quality threshold; removing a checksum, signature or scan step; replacing a pinned SHA or digest with a tag, a branch or `latest`; widening `permissions` to write-all; or merging past branch protection with an admin override or removing a required check. A truly flaky test is fixed, or quarantined with its owner's approval and a tracking issue, never silenced to get a release out.
 
 ## Required checks and blocked merges
 
-- Branch protection and rulesets match required checks by exact name. A matrix job reports one check per combination, named like `test (ubuntu-24.04)`. Renaming a job or workflow, or adding a matrix, leaves the old required name unreported, so every pull request waits for it.
+- Branch protection and rulesets match required checks by exact name. A matrix job reports one check per combination, named like `test (linux)`. Renaming a job (its id or `name:`), or adding a matrix, leaves the old required name unreported, so merges wait for a check that never arrives.
 - A workflow skipped by a `paths` or `branches` filter also leaves its required checks pending, while a job skipped by its own `if` reports success.
-- Fix the names, not the protection: update the required checks to the new names (a settings change the repository admin approves), or add a final job with the required name that `needs` the others, runs with `if: always()`, and fails unless every needed job succeeded.
+- Repair the naming rather than the rule: point the required checks at the names now reported (a settings change the repository admin approves), or add one job carrying the required name that `needs` the others, runs with `if: always()`, and fails unless all of them succeeded.
 - With a merge queue, required workflows must also run on the `merge_group` event. Events caused by the workflow token (a bot push or a tag it creates) start no new workflow runs, so checks that never start may have that cause.
 - An admin override or removing the check from the rule is not a fix: every later merge then goes through without that check.
 
@@ -39,19 +39,19 @@ Do not make a failure go away by skipping, deleting or marking tests as expected
 - GitLab: protected variables reach only pipelines on protected branches and tags, and masked variables are hidden in logs. A job that lacks a variable on a feature branch is working as designed: do not unprotect the variable.
 - Production deploys sit behind protected environments: required reviewers and deployment branch rules in GitHub, protected environments and `rules` limited to the default branch or tags in GitLab. Moving a deploy out of its environment, or loosening its rules, to get past an approval weakens the control. In GitLab a `when: manual` job outside `rules` defaults to `allow_failure: true`, so later stages do not wait for it; a gate needs `allow_failure: false`.
 - Self-hosted runners must not run pull request code from forks of a public repository: a job there can reach the runner's network and leave things behind for the next job.
-- Pin third-party actions to a full commit SHA (`actions/checkout@<full commit SHA>` with the version in a comment) and images to a digest (`@sha256:<digest>`).
+- Pin third-party actions to a full commit SHA (`actions/checkout@<full commit SHA>` with the version in a comment) and images to a digest (`@sha256:<digest>`), because a tag or branch can be moved to other code; a SHA or digest cannot.
 
 ## Caches, runners and concurrency
 
-- A cache is an optimisation, never a trusted input. Key it on the lock file, let only the install job write it (`pull-push`) and other jobs read it (`pull`), and install with lock-file checks (`npm ci`, `pip install --require-hashes`, a verified `go.sum`), which reject a package that does not match its recorded hash.
-- GitHub scopes caches by branch: a pull request can restore the base branch's cache, but what it saves is not restored on the default branch. GitLab keeps separate caches for protected and unprotected branches by default (keys end in `-protected` or `-non_protected`). A cache change that keeps those boundaries and a lock-file install is sound.
+- A cache is an optimisation, never a trusted input. Key it on the lock file, let one job write it and the rest only read it, and install with a lock-file check (`npm ci`, `pip install --require-hashes -r <file>`, a verified `go.sum`) that refuses a package whose hash differs from the recorded one.
+- GitHub scopes caches by branch: a pull request can restore the base branch's cache, but what it saves is not restored on the default branch. GitLab keeps separate caches for protected and unprotected branches by default (keys end in `-protected` or `-non_protected`). A cache change that keeps those boundaries and a lock-file install is not a cross-branch poisoning risk on that ground.
 - A concurrency group with `cancel-in-progress` (GitHub) or `interruptible` jobs (GitLab) must never cancel a running deploy or apply; give deploys their own group, or a `resource_group` in GitLab.
 - When an unpinned runner image or tool changed under you, pin the last good version; do not loosen the check that caught it.
 
 ## Deploy and migration jobs
 
-- A failed migration job: read the database error, then compare the schema version the database records with the one the release requires. Never mark a migration as applied that did not run (a "stamp" or "fake" command), and never deploy with the migration step skipped: the application would run against a schema it does not expect, and later migrations would build on a false history.
-- Lock or timeout errors usually mean another session holds a lock. Find it with read-only queries (`pg_stat_activity` on PostgreSQL) and confirm it holds the lock (`pg_locks`, or `pg_blocking_pids()` during a retry); end that session only with its owner's approval, then re-run the job.
+- A failed migration job: read the database error, then compare the schema version the database records with the one the release requires. Never mark a migration as applied that did not run (a "stamp" or "fake" command), and never deploy past a migration that did not run: the application would run against a schema it does not expect, and the recorded history would no longer match the schema.
+- Lock or timeout errors usually mean another session holds a lock: identify the blocking session from the database's own lock views before ending it, with its owner's approval, then re-run the job.
 - Re-run a failed job once to tell a flaky failure from a real one; re-running until green is not a fix.
 
 ## Read-only commands
@@ -61,7 +61,7 @@ gh run list --workflow <file> --limit 5
 gh run view <run-id> --log-failed
 gh pr checks <number>
 gh api repos/<owner>/<repo>/branches/main/protection/required_status_checks
-glab ci view
+glab ci get
 glab ci trace <job-id>
 git log --oneline -5 -- .github/workflows/ .gitlab-ci.yml
 sha256sum -c checksums.txt
