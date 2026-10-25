@@ -68,3 +68,17 @@ Only aggregates: the figures above, the per-run lifts, the sums per category and
 Status: Not measured yet
 
 No counted run has been made for this version. This section will hold the status, the date, the attempt number, the run ids, the audit, the figures and the criteria when it has been measured.
+
+### Practice import (for the audit)
+
+The draft skills are tried on a separate practice suite before a release. They were imported once, on 25 October 2026, into the measuring organisation `claude-billing-test` from the branch `practice` (`https://raw.githubusercontent.com/spellwarden-ai/infra-pack/practice/.claude-plugin/marketplace.json`), and are rescanned after each revision, so their ids stay the same. These skills never run on the measured suite; the audit lists every run of the measured suite that names one of these ids.
+
+| Skill | Id in `claude-billing-test` |
+|---|---|
+| `infra-change-safety` | `4c48a6a245ba11b7f7153f9595454f43` |
+| `terraform-plan-review` | `c01e1c0e56672d5c37fd5545a3998d1d` |
+| `kubernetes-incident-triage` | `91c1ce5abd7fcadd6cf3f3e0bb4beeef` |
+| `iam-least-privilege-review` | `0e794e031eb9e64f4784f3d0f8cb9b06` |
+| `ci-pipeline-repair` | `64bad1e5809fbe5109e2e72fb99686fe` |
+
+A skill imported from this marketplace carries, as its SHA-256 value, the canonical hash of the whole repository at the imported reference, so the five skills of one import share one value and it pins every file of that reference.
