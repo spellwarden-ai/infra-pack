@@ -66,4 +66,4 @@ Give the corrected statement (exact actions, exact resources, the condition), sa
 
 ## Other clouds
 
-The same reading applies. In Google Cloud the Owner, Editor and Viewer roles are broad, `allUsers` and `allAuthenticatedUsers` make a resource public, and `iam.serviceAccounts.actAs` or token creator rights let a principal act as a service account. In Azure, Owner and User Access Administrator can assign roles (`Microsoft.Authorization/roleAssignments/write`); assign at the resource or resource group, not the subscription, unless the need is subscription-wide.
+The same reading applies. In Google Cloud, Owner, Editor and Viewer are broad, `allUsers` makes a resource public, and `iam.serviceAccounts.actAs` lets a principal act as a service account. In Azure, Owner and User Access Administrator can assign roles; assign at the narrowest scope the need allows.
