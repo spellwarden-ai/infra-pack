@@ -49,9 +49,12 @@ The public documentation each skill was written from, as the page title and its 
 - [Horizontal Pod Autoscaling](https://kubernetes.io/docs/concepts/workloads/autoscaling/horizontal-pod-autoscale/), Kubernetes
 - [Disruptions](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/), Kubernetes
 - [Safely Drain a Node](https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/), Kubernetes
+- [kubectl drain](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_drain/), Kubernetes
 - [Force Delete StatefulSet Pods](https://kubernetes.io/docs/tasks/run-application/force-delete-stateful-set-pod/), Kubernetes
 - [Auditing](https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/), Kubernetes
 - [Server-Side Apply](https://kubernetes.io/docs/reference/using-api/server-side-apply/), Kubernetes
+- [ObjectMeta](https://kubernetes.io/docs/reference/kubernetes-api/common-definitions/object-meta/), Kubernetes API reference
+- [PersistentVolumeClaim](https://kubernetes.io/docs/reference/kubernetes-api/config-and-storage-resources/persistent-volume-claim-v1/), Kubernetes API reference
 - [kube-apiserver](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/), Kubernetes
 
 ## iam-least-privilege-review
@@ -90,6 +93,7 @@ The public documentation each skill was written from, as the page title and its 
 - [Troubleshooting rules](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/troubleshooting-rules), GitHub
 - [About protected branches](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches), GitHub
 - [Managing a merge queue](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue), GitHub
+- [Downloading source code archives](https://docs.github.com/en/repositories/working-with-files/using-files/downloading-source-code-archives), GitHub
 - [Caching in GitLab CI/CD](https://docs.gitlab.com/ci/caching/), GitLab
 - [CI/CD variables](https://docs.gitlab.com/ci/variables/), GitLab
 - [Protected environments](https://docs.gitlab.com/ci/environments/protected_environments/), GitLab
@@ -99,4 +103,5 @@ The public documentation each skill was written from, as the page title and its 
 - [npm-ci](https://docs.npmjs.com/cli/v11/commands/npm-ci/), npm
 - [Secure installs](https://pip.pypa.io/en/stable/topics/secure-installs/), pip
 - [Explicit Locking](https://www.postgresql.org/docs/current/explicit-locking.html), PostgreSQL
+- [Client Connection Defaults](https://www.postgresql.org/docs/current/runtime-config-client.html), PostgreSQL
 - [The Cumulative Statistics System](https://www.postgresql.org/docs/current/monitoring-stats.html), PostgreSQL

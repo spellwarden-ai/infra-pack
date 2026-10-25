@@ -16,7 +16,7 @@ A plan is Terraform's prediction of the API calls it will make, computed from th
 - Replacements show as `-/+` (destroy, then create) or `+/-` (create, then destroy, under `create_before_destroy`); `# forces replacement` marks the attribute that causes one.
 - The summary `Plan: A to add, C to change, D to destroy` counts each replacement in both add and destroy. Compare it with the intent: a count far larger than the change explains, or a refactor that destroys anything, is wrong until explained.
 - `(known after apply)` is a value computed during the apply. When a resource's own ID or ARN becomes unknown it is being replaced, and resources that refer to it change or are replaced too; follow them.
-- "Objects have changed outside of Terraform" lists drift found on refresh. The plan reverts any of it the configuration manages (attributes it sets that no `ignore_changes` covers), and its change lines show which; find out who made the change and why before reverting it. To keep it instead, update the configuration, or record it with a reviewed `terraform apply -refresh-only`.
+- "Objects have changed outside of Terraform" lists drift found on refresh. The plan reverts any of it the configuration manages (attributes it sets that no `ignore_changes` covers), and its change lines show which; find out who made the change and why before reverting it. To keep it, change the configuration to match (or cover it with `ignore_changes`) and apply that with the owner's approval; `terraform apply -refresh-only` only updates state.
 - JSON (`terraform show -json tfplan`): each `resource_changes[].change.actions` is `["create"]`, `["update"]`, `["delete"]`, `["delete","create"]`, `["create","delete"]`, `["read"]` or `["no-op"]`. `replace_paths` lists the attributes forcing replacement and `action_reason` says why. Compare `before` with `after`; `after_unknown` marks computed values.
 
 ## Match every change to the intent
@@ -48,7 +48,7 @@ Not every replacement is a loss. Some resources are immutable by design, so a ch
 ## State, backend and workspace
 
 - A plan that wants to create what already exists, or destroy everything, usually means Terraform is reading the wrong or an empty state: a changed backend location, the wrong workspace, var file, account, region or role. Never apply it: it would duplicate or delete real infrastructure and leave the state out of step with it.
-- `terraform init -migrate-state` copies state from the backend the directory was last initialised with to the newly configured one; `terraform init -reconfigure` switches without copying.
+- `terraform init -migrate-state` copies state from the backend the directory was last initialised with to the newly configured one, and runs only with the owner's approval; `terraform init -reconfigure` switches without copying.
 - After a `-reconfigure` to the new location, `-migrate-state` copies nothing, because the old location is no longer recorded. Recover in two steps: point the configuration back at the old location and re-initialise there with `terraform init -reconfigure`; then, with the owner's approval, set the new location again and run `terraform init -migrate-state`, or instead copy the state file to the new location. Delete nothing from the old location until planning against the new one shows no changes.
 - Check where the plan came from before trusting it:
 
@@ -63,7 +63,7 @@ terraform show -json tfplan | jq -r '.resource_changes[] | "\(.change.actions | 
 ## Locks and concurrent runs
 
 - A state lock means another operation may be writing the state right now. Read its `Who`, `Operation` and `Created` fields and match them with running pipelines and people first.
-- If its holder is still working, let it finish, then plan again, since the state has changed, and apply the new plan. Disabling locking with `-lock=false` is never the answer.
+- If its holder is still working, let it finish, then plan again, since the state has changed, and apply the new plan through the normal pipeline and its approval. Disabling locking with `-lock=false` is never the answer.
 - `terraform force-unlock` is only for a lock whose holder is confirmed gone (the run ended or was killed and nothing else is applying); propose it with that evidence, run it only with the stack owner's approval, then re-plan.
 
 ## What a plan cannot show
@@ -77,7 +77,7 @@ Say so in the review when it matters:
 
 ## When it is safe to apply
 
-Say yes when every change is explained by the intent, nothing stateful is replaced or destroyed without a planned and approved reason, the plan was made against the right state with no unexplained drift, and the dependents the plan cannot see are known to be fine. Then apply the saved plan that was reviewed (`terraform apply tfplan`) through the normal pipeline and its approval. Keep `-target` for recovery, since it applies part of the graph, and use `-replace` only when the replacement is the intent and the owner approves it.
+Say yes when every change is explained by the intent, nothing stateful is replaced or destroyed without a planned and approved reason, the plan was made against the right state with no unexplained drift, and the dependents the plan cannot see are known to be fine. Then apply the saved plan that was reviewed (`terraform apply tfplan`) through the normal pipeline and its approval. Use `-target` only for recovery, with the owner's approval, since it applies part of the graph, and use `-replace` only when the replacement is the intent and the owner approves it.
 
 ## Commands that change things
 

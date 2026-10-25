@@ -45,12 +45,12 @@ Every review ends in one of three decisions.
 
 ## 5. Point to the evidence
 
-- Quote the lines the decision rests on, copied character for character from the inputs (same spacing, case and punctuation), in backticks, naming the input: usually the changed or failing line itself and the lines that show the cause and who or what is affected. Do not paraphrase or shorten a quoted line with `...`; where part of it is hidden as `***`, quote the readable rest.
+- Quote the lines the decision rests on exactly as they appear, in backticks, naming the input, so a search finds each quote in the input and shows nothing was reworded: usually the changed or failing line itself and the lines that show the cause and who or what is affected. Do not paraphrase or shorten a quoted line with `...`; where part of it is hidden as `***`, quote the readable rest.
 - State each reason in your own words and cite the inputs for it.
 
 ## 6. Keep the actions few
 
-- Propose the smallest set of steps that settles the question, usually two to five, fewer for a sound change. Every command, change, approval or check you propose counts as a step, optional ones included; leave out extras that do not change the decision.
+- Propose the smallest set of steps that settles the question, usually two to five, fewer for a sound change. Each proposed action, optional ones included, is work someone must weigh or run, and extras bury the steps that decide the question; leave out those that do not change the decision.
 - Give one path. Each contingency (if the check shows X, do Y, otherwise Z) adds steps; keep only the condition the deciding check sets. Fold related edits into one change, give one verification step, and choose the one or two checks that decide the question.
 - Leave out generic advice (add monitoring, write a postmortem, audit other services) unless the inputs show it is needed now.
 

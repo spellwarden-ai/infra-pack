@@ -16,7 +16,7 @@ A pipeline is part of the system's controls: its tests, scans, required checks, 
 - Read the log from the first error, not from the last line; the final message is often a consequence. Note the step, the command, the exit code and the exact message.
 - Compare with the last green run of the same workflow: what changed in the commit, the workflow file, the runner image (`ubuntu-latest` moves), action and tool versions, the lock file, base images, secrets and variables, and repository settings such as branch protection, rulesets and environments.
 - Classify the failure: a real regression in the code; a flaky test (fails and passes on the same commit); the environment (runner image, tool version, an unpinned dependency, network, rate limits); the configuration (YAML, job names, `needs`, `if` and `rules`, path filters); permissions (token scopes, protected variables, fork restrictions); or integrity (checksum, signature or lock file hash).
-- Treat a checksum or signature failure as possible tampering, not a value to update. A released version's file never changes, at its publisher or at a copy, so a new checksum for the same version is itself the incident: check what the publisher released and how the copy you download (mirror, proxy, cache) came to differ, and never take a new value from the source that served the changed file. Change a pin only to move deliberately to a new version, checked against its publisher.
+- Treat a checksum or signature failure as possible tampering, not a value to update. A released version's file is not expected to change, at its publisher or at a copy, so treat a new checksum for the same version as an incident until the publisher explains the change (a re-published asset, a regenerated archive): check how the copy you download (mirror, proxy, cache) came to differ, and never take a new value from the source that served the changed file. Change a pin only for a deliberate upgrade or a change the publisher has explained, checked against the publisher.
 
 ## Fix without weakening
 
@@ -51,8 +51,8 @@ Do not make a failure go away by skipping, deleting or marking tests as expected
 ## Deploy and migration jobs
 
 - A failed migration job: read the database error, then compare the schema version the database records with the one the release requires. Never mark a migration as applied that did not run (a "stamp" or "fake" command), and never deploy past a migration that did not run: the application would run against a schema it does not expect, and the recorded history would no longer match the schema.
-- Lock or timeout errors usually mean another session holds a lock: identify the blocking session from the database's own lock views before ending it, with its owner's approval, then re-run the job.
-- Re-run a failed job once to tell a flaky failure from a real one; re-running until green is not a fix.
+- A lock-wait timeout or deadlock error usually means another session holds a lock: identify the blocking session from the database's own lock views before ending it, with its owner's approval, then re-run the job.
+- Re-run a failed job once (a deploy or migration job only with the owner's approval) to tell a flaky failure from a real one; re-running until green is not a fix.
 
 ## Read-only commands
 
