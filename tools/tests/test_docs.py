@@ -22,6 +22,14 @@ def read(name: str) -> str:
     return (REPO / name).read_text(encoding="utf-8")
 
 
+STATUSES = ("Not measured yet", "Measured: met the bar", "Measured: below the bar", "Void")
+
+
+def version_status(version: str) -> str:
+    """The status line of a version's section in MEASUREMENTS.md."""
+    found = re.search(rf"(?m)^## {re.escape(version)}\n\nStatus: (.+)\n", read("MEASUREMENTS.md"))
+    return found.group(1) if found else ""
+
 class DocumentShapeTest(unittest.TestCase):
     NAMES = ("README.md", "MEASUREMENTS.md", "CHANGELOG.md", "SECURITY.md")
 
@@ -49,11 +57,19 @@ class ReadmeTest(unittest.TestCase):
             self.assertIn(f"`{name}`", text)
         self.assertIn("Each skill is a single SKILL.md: no scripts, nothing that runs.", text)
 
-    def test_it_makes_no_claim_before_a_measurement(self) -> None:
-        text = read("README.md")
-        self.assertIn("Version 0.9.0 is not measured yet.", text)
+    def test_its_measurement_line_follows_the_status_in_measurements(self) -> None:
+        # A lift is quoted only for a version that met the bar, and then exactly as MEASUREMENTS.md publishes it.
+        text, status = read("README.md"), version_status("0.9.0")
         self.assertIn("(MEASUREMENTS.md)", text)
-        self.assertIsNone(re.search(r"benchmarked|[+-]\d+(\.\d+)? points", text, re.IGNORECASE))
+        if status != "Measured: met the bar":
+            self.assertIsNone(re.search(r"benchmarked|[+-]\d+(\.\d+)? points", text, re.IGNORECASE))
+            return
+        line = re.search(r"Measured on (?:40|\d+ of 40) infrastructure tasks \(Infra-Ops 40\) with all five skills loaded: "
+                         r"(\+\d+\.\d) points, 95% interval (-?\d+\.\d) to (-?\d+\.\d), over five runs, version 0\.9\.0, "
+                         r"the (?:first|second|third) measurement of the pack on this suite\. Details in \[MEASUREMENTS\.md\]", text)
+        self.assertIsNotNone(line)
+        lift, low, high = line.groups()
+        self.assertIn(f"| Observed (published) | {lift} | {low} to {high} |", read("MEASUREMENTS.md"))
 
     def test_links_point_at_files_that_exist(self) -> None:
         for target in re.findall(r"\]\(([^)#]+)\)", read("README.md")):
@@ -65,7 +81,7 @@ class MeasurementsTest(unittest.TestCase):
         text = read("MEASUREMENTS.md")
         self.assertIn("## How the pack is measured", text)
         self.assertIn("### What this measures", text)
-        self.assertRegex(text, r"(?m)^## 0\.9\.0\n\nStatus: Not measured yet\n")  # one "## <version>" section per version
+        self.assertIn(version_status("0.9.0"), STATUSES)  # one "## <version>" section per version
 
     def test_the_four_criteria_and_the_three_kinds_are_defined(self) -> None:
         text = read("MEASUREMENTS.md")
