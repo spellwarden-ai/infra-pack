@@ -3,6 +3,7 @@ scanner's reading of .spellwarden/config.yml. Nothing here touches the network."
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -17,10 +18,17 @@ REQUIREMENTS = support.TOOLS / "requirements.txt"
 SPELLWARDEN = Path(sys.executable).with_name("spellwarden")
 
 
+def local_env() -> dict[str, str]:
+    """The environment without the variables of a CI job: on a pull or merge request the scanner reads the config of
+    the base revision instead of the working tree, and these tests are about a scan of the working tree."""
+    return {name: value for name, value in os.environ.items()
+            if not name.startswith(("GITHUB_", "GITLAB_", "CI_", "RUNNER_")) and name != "CI"}
+
+
 def scan(root: Path, output: Path) -> subprocess.CompletedProcess:
     return subprocess.run(
         [str(SPELLWARDEN), "scan", ".", "--no-telemetry", "--fail-on", "low", "--format", "json", "--output", str(output)],
-        cwd=root, capture_output=True, text=True, timeout=120, check=False,
+        cwd=root, capture_output=True, text=True, timeout=120, check=False, env=local_env(),
     )
 
 
