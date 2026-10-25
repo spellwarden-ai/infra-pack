@@ -57,7 +57,7 @@ The skills' text, all five skills at once, is placed in the system prompt of one
 
 The people and agents who write the skills never read the Infra-Ops 40 tasks or any per-task result of that suite. They improve the skills against a separate practice suite of 20 tasks that only the build can run. Everything the writers are told is kept in a log. A mechanical check compares the skills with the held-out tasks for shared wording and names, and an independent review checks that the practice tasks do not repeat held-out scenarios.
 
-The limits of this process are plain. It is a rule that agents follow, not a sandbox, and the log and the checks record and detect a breach rather than prevent one. The author of the specification had read part of the held-out suite, which is why the scope of each skill is stated at the level of published information and the topics inside each skill come from the writers and from public documentation. Customers' own imports and runs of the public pack in their own organisations are outside the record.
+The limits of this process are plain. It is a rule that agents follow, not a sandbox, and the log and the checks record and detect a breach rather than prevent one. The author of the specification had read part of the held-out suite, which is why the scope of each skill is stated at the level of published information and the topics inside each skill come from the writers and from public documentation. Customers' own imports and runs of the public pack in their own organisations are outside the record. For version 0.9.0 one release gate was not run: the check of the cloud account's trail for a direct call of a model outside the product, because the operator's role cannot read the trail or the model metrics; the owner decided to record this as a limit, so the validity of the measurement rests on the audit of the runs below.
 
 ### What is published
 
@@ -82,3 +82,31 @@ The draft skills are tried on a separate practice suite before a release. They w
 | `ci-pipeline-repair` | `64bad1e5809fbe5109e2e72fb99686fe` |
 
 A skill imported from this marketplace carries, as its SHA-256 value, the canonical hash of the whole repository at the imported reference, so the five skills of one import share one value and it pins every file of that reference.
+
+### Release record
+
+Version 0.9.0 was released on 25 October 2026: tag `v0.9.0` on commit `c9bd915d0b8eb620f07bc3bc7be83fdda3a06741`. It was imported the same day into the measuring organisation `claude-billing-test` from `https://raw.githubusercontent.com/spellwarden-ai/infra-pack/v0.9.0/.claude-plugin/marketplace.json`. Each of the five skills ended its scan passed, with no open finding at any severity, and is Curated (curation score 10.8). The SHA-256 value the product records for each of them, and that every counted run freezes, is the canonical hash of the whole repository at the tag: `70de87f41719077e5be3f581611db0535bad7b4bac7446efa20f23e1368fa22c`. Each skill's own file hash is listed for information.
+
+| Skill | Id in `claude-billing-test` | SHA-256 of its SKILL.md |
+|---|---|---|
+| `infra-change-safety` | `365d3e06a46ba124e44be4cdc9b0ef6d` | `e501707c5559b4882b14a7ff63d4b0e2c3e5e41c5ec5ee1210f934cce737d6b0` |
+| `terraform-plan-review` | `bb08c67409720242c7931f4f06b2892f` | `7cfb647bbf43993f8ee92089ed475631aa558f028b19caf6920bbb35fd1327e1` |
+| `kubernetes-incident-triage` | `4f1cb1f0c8d82dae9c2da4e4c843422d` | `2225360e19c3e4d93439b76c757b2045418f58b905c023b09c7792d528bb3bde` |
+| `iam-least-privilege-review` | `6a857e316276d2d35e34ee8023f6b987` | `a91a462cbfb9fe7317f8169858da9cd7d7fe0a5b175059bcd1a067f080cc0a72` |
+| `ci-pipeline-repair` | `f8541d9d9604372048ee2162215b7f5d` | `99e31d391a0aba42b2906879033b3a399c358689f79c1b2e68f67981967f3c3f` |
+
+### Before the counted runs
+
+- Measuring organisation: `claude-billing-test`, whose only member is Spellwarden's test account `hello+claude@spellwarden.ai` (user `01a14b115a0c768699be19237b2d3d03`). The build's accounts: that user and its API key `api_key:ebc5bfac2c1f`. No test user was invited.
+- Models, read from the product's settings before the first counted run and not changed while the measurement is open: agent `eu.anthropic.claude-sonnet-5`, judge `eu.anthropic.claude-opus-5-5`, effort `high`. The agent's answer may use up to 16 000 output tokens (raised from 4096 on 25 October 2026, before any counted run, because at effort high the model's thinking shares that budget).
+- Suite: `infra-ops-40`, version `1.0.0`, SHA-256 `3e716fcecf1ea5e4c95cfb641df45b61c08f3ed9314b7fe4b6a8e65e42e82719`.
+- Skills, in the order every counted run loads them: `infra-change-safety`, `terraform-plan-review`, `kubernetes-incident-triage`, `iam-least-privilege-review`, `ci-pipeline-repair`.
+
+### Audit
+
+Every run of `infra-ops-40` in the organisations the build holds keys for (`claude-billing-test` and NETBEARS) whose skills name an id of the practice import or of the release import, carry the release's SHA-256 value, or carry a pack skill's name. Listed with `tools/lift.py audit`.
+
+| When | Organisation | Pack runs by the build's accounts | Pack runs by others | Name only |
+|---|---|---|---|---|
+| 25 October 2026, before the first counted run | `claude-billing-test` | none | none | none |
+| 25 October 2026, before the first counted run | NETBEARS | none | none | none |
