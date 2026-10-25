@@ -1,0 +1,51 @@
+name: check
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  pack:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Create the virtual environment
+        run: python3 -m venv .venv
+      - name: Install the pinned tools
+        run: .venv/bin/pip install --require-hashes -r tools/requirements.txt
+      - name: Check the pack
+        run: .venv/bin/python tools/check_pack.py
+      - name: Run the tests
+        run: .venv/bin/python -m unittest discover -s tools/tests
+
+  scan:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Scan with the Spellwarden action
+        uses: spellwarden-ai/scan@653350861eac5f98938eeaba0b91bf7143b83ddd  # v1.2.1
+        with:
+          fail-on: low
+          comment: "false"
+          telemetry: "false"
+          sarif-upload: ${{ github.event_name == 'push' }}
+      - name: Create the virtual environment
+        run: python3 -m venv .venv
+      - name: Install the pinned tools
+        run: .venv/bin/pip install --require-hashes -r tools/requirements.txt
+      - name: Scan again and write the report
+        run: .venv/bin/spellwarden scan . --format json --output scan.json --fail-on low
+      - name: Check the report lists exactly the five skills
+        run: .venv/bin/python tools/check_scan.py scan.json

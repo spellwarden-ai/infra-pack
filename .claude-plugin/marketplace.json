@@ -1,0 +1,14 @@
+{
+  "name": "spellwarden",
+  "owner": {"name": "Spellwarden", "email": "hello@spellwarden.ai", "url": "https://spellwarden.ai"},
+  "metadata": {"description": "Skills for infrastructure operations from Spellwarden."},
+  "plugins": [
+    {
+      "name": "infra-pack",
+      "source": "./plugins/infra-pack",
+      "description": "Five skills for infrastructure operations: change safety, Terraform plan review, Kubernetes incident triage, IAM least-privilege review and CI pipeline repair.",
+      "category": "infrastructure",
+      "tags": ["terraform", "kubernetes", "iam", "ci", "infrastructure"]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "infra-pack",
+  "displayName": "Spellwarden Infra Pack",
+  "version": "0.9.0",
+  "description": "Five skills for infrastructure operations: change safety, Terraform plan review, Kubernetes incident triage, IAM least-privilege review and CI pipeline repair.",
+  "author": {"name": "Spellwarden", "url": "https://spellwarden.ai"},
+  "homepage": "https://github.com/spellwarden-ai/infra-pack",
+  "repository": "https://github.com/spellwarden-ai/infra-pack",
+  "license": "Apache-2.0",
+  "keywords": ["terraform", "kubernetes", "iam", "ci", "infrastructure"]
+}
