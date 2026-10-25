@@ -18,7 +18,6 @@ A plan is Terraform's prediction of the API calls it will make, computed from th
 - `(known after apply)` is a value computed during the apply. When a resource's own ID or ARN becomes unknown it is being replaced, and resources that refer to it change or are replaced too; follow them.
 - "Objects have changed outside of Terraform" lists drift found on refresh. The apply will push the configuration back over it, so find out who changed it and why before reverting their change; to accept it instead, update the configuration, or record it with a reviewed `terraform apply -refresh-only`.
 - JSON (`terraform show -json tfplan`): each `resource_changes[].change.actions` is `["create"]`, `["update"]`, `["delete"]`, `["delete","create"]`, `["create","delete"]`, `["read"]` or `["no-op"]`. `replace_paths` lists the attributes forcing replacement and `action_reason` says why. Compare `before` with `after`; `after_unknown` marks computed values.
-- `(sensitive value)` hides content; say the plan does not show it rather than guessing.
 
 ## Match every change to the intent
 
@@ -72,7 +71,7 @@ terraform show -json tfplan | jq -r '.resource_changes[] | "\(.change.actions | 
 Say so in the review when it matters:
 
 - Data inside resources: objects a lifecycle or retention rule will delete later, rows a schema change drops.
-- Who depends on the resource: clients, callers and other stacks outside this configuration. A narrower session length, protocol list, network rule or quota breaks any client that needs more; check access logs, audit trails and the consumers' own configuration.
+- Who depends on the resource: clients, callers and other stacks outside this configuration. After a narrower session length, protocol list, network rule or quota, new requests that need more are refused; whether work already in progress is cut off depends on the system, so do not guess it. Check access logs, audit trails and the consumers' own configuration.
 - Runtime behaviour of an in-place update: some restart, reboot or briefly drop connections; some wait for a maintenance window unless applied immediately.
 - Changes made after the plan, other runs on the same state, partial failure mid-apply, and values that are `(known after apply)`.
 
