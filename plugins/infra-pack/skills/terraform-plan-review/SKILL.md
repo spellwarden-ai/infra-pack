@@ -17,7 +17,7 @@ A plan is Terraform's prediction of the API calls it will make, computed from th
 - The summary `Plan: A to add, C to change, D to destroy` counts each replacement in both add and destroy. Compare it with the intent: a one-line change that adds dozens of resources, or a refactor that destroys anything, is wrong until explained.
 - `(known after apply)` is a value computed during the apply. When a resource's own ID or ARN becomes unknown it is being replaced, and resources that refer to it change or are replaced too; follow them.
 - "Objects have changed outside of Terraform" lists drift found on refresh. The apply will push the configuration back over it, so find out who changed it and why before reverting their change; to accept it instead, update the configuration, or record it with a reviewed `terraform apply -refresh-only`.
-- JSON (`terraform show -json tfplan`): each `resource_changes[].change.actions` is `["create"]`, `["update"]`, `["delete"]`, `["delete","create"]`, `["create","delete"]`, `["read"]` or `["no-op"]`. `replace_paths` lists the attributes forcing replacement and `action_reason` says why (tainted, requested with `-replace`, and so on). Compare `before` with `after`; `after_unknown` marks computed values.
+- JSON (`terraform show -json tfplan`): each `resource_changes[].change.actions` is `["create"]`, `["update"]`, `["delete"]`, `["delete","create"]`, `["create","delete"]`, `["read"]` or `["no-op"]`. `replace_paths` lists the attributes forcing replacement and `action_reason` says why. Compare `before` with `after`; `after_unknown` marks computed values.
 - `(sensitive value)` hides content; say the plan does not show it rather than guessing.
 
 ## Match every change to the intent
@@ -25,7 +25,7 @@ A plan is Terraform's prediction of the API calls it will make, computed from th
 - List each resource address with its action and ask whether the intent explains it. An unexplained change blocks approval until it is explained.
 - Check the scope of what is added or changed. A rule or policy with an empty or missing filter, prefix, selector or condition applies to everything it can reach: a storage lifecycle or retention rule without a prefix or tag filter, a firewall rule open to `0.0.0.0/0`, a policy on `*`. A code comment, variable name or PR title is not the scope; the configuration is.
 - An omitted argument takes the provider's default, which may not be what the author assumes.
-- Changing a resource name, a module address, `count` to `for_each`, or the keys of a `for_each` re-keys resources: Terraform destroys the old address and creates a new one unless a `moved` block or a state move maps them. Removing one item from a list used with `count` shifts every later index and replaces those resources; stable `for_each` keys avoid it.
+- Changing a resource name, a module address, `count` to `for_each`, or the keys of a `for_each` re-keys resources: Terraform destroys the old address and creates a new one unless a `moved` block or a state move maps them. Removing one item from a list used with `count` shifts every later index, so those resources change or are replaced; stable `for_each` keys avoid it.
 - A plan can change with no code change when an input moves: a data source that picks the latest image, a module or provider version range, a module source on a branch. Pin them, and treat a replacement they cause as a change to review.
 
 ## Changes that lose data or identity
@@ -38,7 +38,7 @@ Replacing or destroying these loses something the new resource does not bring ba
 
 Such a plan is not safe to apply until the intent explains it, a backup or snapshot exists and is checked, the consumers are known, and an owner explicitly approves the loss. With `create_before_destroy`, a replacement whose name must be unique fails or collides; check the name.
 
-Not every replacement is a loss. Some resources are immutable by design, so a change creates a new version and retires or keeps the old one: a container task definition revision, a launch template version, a function version, a configuration object with a hashed name. That is the normal deploy path. Assess the rollout that follows (rolling update settings, health checks, automatic rollback, what keeps serving meanwhile), not the word "replaced".
+Not every replacement is a loss. Some resources are immutable by design, so a change creates a new version: a container task definition revision, a launch template version, a function version, a configuration object with a hashed name. That is the normal deploy path. Read what happens to the old version from the plan (a destroy removes or deregisters it), not from memory. Assess the rollout that follows (rolling update settings, health checks, automatic rollback, what keeps serving meanwhile), not the word "replaced".
 
 ## Refactors, imports and removals
 
@@ -81,4 +81,4 @@ Say yes when every change is explained by the intent, nothing stateful is replac
 
 ## Commands that change things
 
-`terraform apply`, `terraform destroy`, `terraform import`, `terraform state mv`, `terraform state rm`, `terraform force-unlock` and `terraform init -migrate-state` change infrastructure or state. Propose each with its reason and run it only after the owner approves; save a copy of the state first (`terraform state pull` to a file) before any state edit.
+`terraform apply`, `destroy`, `import`, `state mv`, `state rm`, `force-unlock` and `init -migrate-state` change infrastructure or state: propose each with its reason, run it only after the owner approves, and save a copy of the state (`terraform state pull` to a file) before any state edit.

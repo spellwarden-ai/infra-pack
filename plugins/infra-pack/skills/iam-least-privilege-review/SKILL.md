@@ -29,7 +29,7 @@ Every request starts denied. An `Allow` in an applicable policy grants it, and a
 
 - Write down what the workload must do (which actions on which resources) from the request and from real use: CloudTrail events, IAM last accessed information, Access Analyzer policy generation. Grant that, scoped to the exact resources, and say what the reviewed policy grants beyond it.
 - Name what is missing too. A policy that is too narrow fails in production: `kms:Decrypt` for data encrypted with a customer managed key, `s3:ListBucket` so that a missing object returns 404 rather than 403, `iam:PassRole` to hand a role to a service.
-- Read "read-only" literally. A managed policy such as `ReadOnlyAccess` allows Get, List, Describe and similar actions across services, and many of those read data: object contents, table items, queue messages, logs, parameters. For a review of configuration only, use a configuration-scoped policy (the AWS managed `SecurityAudit` or `ViewOnlyAccess`, or a custom one), add an explicit `Deny` on data reads where data must stay out of reach, and test both what must work and what must be refused.
+- Read "read-only" literally. A managed policy such as `ReadOnlyAccess` allows Get, List, Describe and similar actions across services, and many of those read data, such as object contents and table items. For a review of configuration only, use a configuration-scoped policy (the AWS managed `SecurityAudit` or `ViewOnlyAccess`, or a custom one), add an explicit `Deny` on data reads where data must stay out of reach, and test both what must work and what must be refused.
 - Approve a policy that already matches the need. A tag condition that scopes a wildcard, a `*` resource the action requires, or a linter warning that does not apply are not reasons to block; explain why the warning does not apply.
 
 ## Escalation paths
@@ -53,7 +53,6 @@ Any of these on broad resources lets a principal become more powerful than its p
 ```
 aws iam get-role --role-name app --query 'Role.AssumeRolePolicyDocument'
 aws iam list-attached-role-policies --role-name app
-aws iam list-role-policies --role-name app
 aws iam get-policy-version --policy-arn <policy-arn> --version-id <version-id>
 aws iam simulate-principal-policy --policy-source-arn arn:aws:iam::123456789012:role/app --action-names s3:GetObject --resource-arns arn:aws:s3:::app-data/report.csv
 aws accessanalyzer validate-policy --policy-type IDENTITY_POLICY --policy-document file://policy.json
