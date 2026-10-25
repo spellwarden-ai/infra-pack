@@ -17,7 +17,6 @@ Where the failure shows says where to look:
 
 - A controller with no pods at all: pods are refused at creation. Read the events of the ReplicaSet, StatefulSet or Job (`FailedCreate`): admission (Pod Security, a policy engine or webhook), ResourceQuota or LimitRange, a missing service account.
 - `Pending`: the scheduler cannot place the pod. Its events name the reason: requests larger than any node has free, taints without tolerations, affinity or topology rules, or a PersistentVolumeClaim that is unbound or bound to a volume in another zone.
-- `ContainerCreating` for minutes: a volume that will not attach or mount, a missing Secret or ConfigMap, the network plugin.
 - `ErrImagePull` or `ImagePullBackOff`: wrong image name or tag, a missing pull secret, an unreachable or rate-limited registry.
 - `CrashLoopBackOff`: the container starts and exits. Read `kubectl logs --previous` and `lastState.terminated` (`reason`, `exitCode`). Exit 137 with `OOMKilled` is the memory limit; 137 without it is a SIGKILL, often after failed liveness probes; 143 is SIGTERM; 1 or another code is the program's own error.
 - `Running` but not Ready: the readiness probe fails, and Services send it no traffic.
@@ -52,7 +51,7 @@ Order: read-only checks, then a targeted and reversible change, then, with appro
 
 Propose these only with the impact stated, explicit approval from the workload's owner or the incident lead, and the safer alternative alongside:
 
-- `kubectl delete` on a PersistentVolumeClaim, a namespace or a StatefulSet, or with `--all` or a broad label selector. List exactly what matches with `kubectl get` first. Deleting what a controller or schedule recreates (pods of a ReplicaSet, Jobs of an unsuspended CronJob) does not stop the problem; stop or fix the source first. A claim whose volume has reclaim policy `Delete` takes the disk with it. Deleting a Job kills its pods and their work.
+- `kubectl delete` on a PersistentVolumeClaim, a namespace or a StatefulSet, or with `--all` or a broad label selector. List exactly what matches with `kubectl get` first. Deleting what a controller or schedule recreates (pods of a ReplicaSet, Jobs of an unsuspended CronJob) does not stop the problem on its own: stop the source, then deal with what is already running. A claim whose volume has reclaim policy `Delete` takes the disk with it. Deleting a Job kills its pods and their work.
 - Restarting or deleting the only replica, or the pod of a single-replica StatefulSet, is an outage for that service. `kubectl rollout restart` replaces every pod. Force deletion (`--force --grace-period=0`) of a StatefulSet pod can leave two copies writing the same storage.
 - `kubectl drain` evicts every pod on a node: check PodDisruptionBudgets and single-replica workloads first. `kubectl cordon` alone only stops new pods and is easy to undo.
 - Removing finalizers, scaling to zero, editing a live object outside its GitOps source, or changing a namespace's security level.

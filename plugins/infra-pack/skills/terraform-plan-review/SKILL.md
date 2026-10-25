@@ -13,7 +13,7 @@ A plan is Terraform's prediction of the API calls it will make, computed from th
 
 ## Read the plan
 
-- Symbols: `+` create, `-` destroy, `~` update in place, `-/+` destroy then create (replace), `+/-` create then destroy (replace under `create_before_destroy`), `<=` read a data source. `# forces replacement` marks the attribute that causes a replacement.
+- Replacements show as `-/+` (destroy, then create) or `+/-` (create, then destroy, under `create_before_destroy`); `# forces replacement` marks the attribute that causes one.
 - The summary `Plan: A to add, C to change, D to destroy` counts each replacement in both add and destroy. Compare it with the intent: a one-line change that adds dozens of resources, or a refactor that destroys anything, is wrong until explained.
 - `(known after apply)` is a value computed during the apply. When a resource's own ID or ARN becomes unknown it is being replaced, and resources that refer to it change or are replaced too; follow them.
 - "Objects have changed outside of Terraform" lists drift found on refresh. The apply will push the configuration back over it, so find out who changed it and why before reverting their change; to accept it instead, update the configuration, or record it with a reviewed `terraform apply -refresh-only`.
@@ -49,7 +49,8 @@ Not every replacement is a loss. Some resources are immutable by design, so a ch
 ## State, backend and workspace
 
 - A plan that wants to create what already exists, or destroy everything, usually means Terraform is reading the wrong or an empty state: a changed backend key, bucket or prefix, the wrong workspace, var file, account, region or role. Never apply it: the result is a duplicate beside the real resources (or deleted infrastructure) and a state that tracks the wrong objects.
-- `terraform init -migrate-state` copies the state from the backend the directory was last initialised with to the newly configured one. `terraform init -reconfigure` switches without copying, and after it there is nothing left to migrate from: re-initialise on the old location, then change the configuration and migrate, or copy the state object across with the owner's approval. The move is done when a plan on the new location shows no changes; keep the old object until then.
+- `terraform init -migrate-state` copies state from the backend the directory was last initialised with to the newly configured one; `terraform init -reconfigure` switches without copying.
+- After a `-reconfigure` to the new location, `-migrate-state` copies nothing, because the old location is no longer recorded. Recover in two steps: point the configuration back at the old location and re-initialise there, then set the new location again and run `terraform init -migrate-state` (or copy the state object across, with the owner's approval). The move is done when a plan on the new location shows no changes; keep the old object until then.
 - Check where the plan came from before trusting it:
 
 ```

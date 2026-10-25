@@ -46,12 +46,12 @@ Do not make a failure go away by skipping, deleting or marking tests as expected
 - A cache is an optimisation, never a trusted input. Key it on the lock file, let only the install job write it (`pull-push`) and other jobs read it (`pull`), and install with lock-file checks (`npm ci`, `pip install --require-hashes`, a verified `go.sum`), which reject a package that does not match its recorded hash.
 - GitHub scopes caches by branch: a pull request can restore the base branch's cache, but what it saves is not restored on the default branch. GitLab keeps separate caches for protected and unprotected branches by default (keys end in `-protected` or `-non_protected`). A cache change that keeps those boundaries and a lock-file install is sound.
 - A concurrency group with `cancel-in-progress` (GitHub) or `interruptible` jobs (GitLab) must never cancel a running deploy or apply; give deploys their own group, or a `resource_group` in GitLab.
-- Pin runner images and tool versions. When an unpinned tool changed under you, pin the last good version; do not loosen the check that caught it.
+- When an unpinned runner image or tool changed under you, pin the last good version; do not loosen the check that caught it.
 
 ## Deploy and migration jobs
 
 - A failed migration job: read the database error, then compare the schema version the database records with the one the release requires. Never mark a migration as applied that did not run (a "stamp" or "fake" command), and never deploy with the migration step skipped: the application would run against a schema it does not expect, and later migrations would build on a false history.
-- Lock or timeout errors usually mean another session holds a lock. Find it with read-only queries (`pg_stat_activity`, `pg_locks`, `pg_blocking_pids()` on PostgreSQL); end that session only with its owner's approval, then re-run the job.
+- Lock or timeout errors usually mean another session holds a lock. Find it with read-only queries (`pg_stat_activity` on PostgreSQL) and confirm it holds the lock (`pg_locks`, or `pg_blocking_pids()` during a retry); end that session only with its owner's approval, then re-run the job.
 - Re-run a failed job once to tell a flaky failure from a real one; re-running until green is not a fix.
 
 ## Read-only commands
