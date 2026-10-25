@@ -36,7 +36,7 @@ Each skill is a single SKILL.md: no scripts, nothing that runs.
 
 ## How it is measured
 
-Version 0.9.0 is not measured yet. How the pack will be measured, the rules for what may be claimed, and the results once they exist are in [MEASUREMENTS.md](MEASUREMENTS.md).
+Measured on 40 infrastructure tasks (Infra-Ops 40) with all five skills loaded: +15.0 points, 95% interval 3.6 to 26.4, over five runs, version 0.9.0, the first measurement of the pack on this suite. Details in [MEASUREMENTS.md](MEASUREMENTS.md), which also sets out how the pack is measured and what may be claimed from a measurement.
 
 ## Scan it yourself
 

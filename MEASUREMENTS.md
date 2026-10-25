@@ -65,9 +65,86 @@ Only aggregates: the figures above, the per-run lifts, the sums per category and
 
 ## 0.9.0
 
-Status: Not measured yet
+Status: Measured: met the bar
 
-No counted run has been made for this version. This section will hold the status, the date, the attempt number, the run ids, the audit, the figures and the criteria when it has been measured.
+Measured on 25 October 2026. This is the first measurement of the pack on Infra-Ops 40 version 1.0.0, of the three at most that are made on that version of the suite.
+
+Measured on 40 infrastructure tasks (Infra-Ops 40) with all five skills loaded: +15.0 points, 95% interval 3.6 to 26.4, over five runs. What this figure measures, and what it does not, is set out under "What this measures" above. `tools/lift.py report` computed every figure below from the five runs and checked them against the values recorded before the first run.
+
+### Result
+
+| View | Lift (points) | 95% interval | Tasks | Graded pairs |
+|---|---|---|---|---|
+| Observed (published) | +15.0 | 3.6 to 26.4 | 40 | 200 |
+| Worst case (decides the criteria) | +15.0 | 3.6 to 26.4 | 40 | 200 |
+
+Every answer of the five runs could be graded, so the two views are the same.
+
+### The counted runs
+
+The five paired runs, one at a time, each started when the one before had finished. All five ended `finished`; none ended `error`, so no run was replaced.
+
+| Run | Id | Started (UTC) | Status | Baseline passes | With-skills passes | Lift (points) |
+|---|---|---|---|---|---|---|
+| 1 of 5 | `01a1747a20d07d69b6fe93721aa60f8f` | 25 October 2026, 19:12:03 | finished | 23 of 40 | 30 of 40 | +17.5 |
+| 2 of 5 | `01a1748275d07cc593e65bab441ef0fd` | 25 October 2026, 19:21:09 | finished | 21 of 40 | 27 of 40 | +15.0 |
+| 3 of 5 | `01a1748bb7f874fcbe3ac9d9644b53c6` | 25 October 2026, 19:31:16 | finished | 22 of 40 | 23 of 40 | +2.5 |
+| 4 of 5 | `01a17494f7ec77b3a33ce9f742b00806` | 25 October 2026, 19:41:22 | finished | 18 of 40 | 29 of 40 | +27.5 |
+| 5 of 5 | `01a1749d47c57b0489cdb2bc143fc146` | 25 October 2026, 19:50:26 | finished | 21 of 40 | 26 of 40 | +12.5 |
+
+The lifts of the five runs range from +2.5 to +27.5 points, in both views.
+
+Scan state of the five skills: before each of the five runs, each of the five skills had its last scan passed, no open finding at any severity, was not quarantined, and carried the release's SHA-256 value `70de87f41719077e5be3f581611db0535bad7b4bac7446efa20f23e1368fa22c`.
+
+### Passes by category, summed over the five runs
+
+| Category | Pairs | Baseline passes | With-skills passes | Lift (points) |
+|---|---|---|---|---|
+| Terraform plan review | 60 | 30 | 41 | +18.3 |
+| Kubernetes incident triage | 50 | 34 | 38 | +8.0 |
+| IAM least-privilege review | 50 | 15 | 27 | +24.0 |
+| CI pipeline repair | 40 | 26 | 29 | +7.5 |
+
+### Passes by kind, summed over the five runs
+
+| Kind | Pairs | Baseline passes | With-skills passes | Lift (points) |
+|---|---|---|---|---|
+| `trap` | 140 | 77 | 93 | +11.4 |
+| `approve` | 45 | 22 | 37 | +33.3 |
+| `insufficient_evidence` | 15 | 6 | 5 | -6.7 |
+
+The worst-case view gives the same sums, as no answer was ungradable.
+
+### Approve tasks, the safety gate and ungradable answers
+
+| Count | Baseline | With skills |
+|---|---|---|
+| Approve task passes, over the valid pairs | 22 | 37 |
+| Approve task answers that could not be graded | 0 | 0 |
+| Answers with safety 0, over the valid pairs of all tasks | 4 | 2 |
+| All answers that could not be graded | 0 | 0 |
+
+No answer was ungradable, for any reason.
+
+### Valid pairs per task
+
+| Valid pairs | 5 | 4 | 3 | 2 | 1 | 0 |
+|---|---|---|---|---|---|---|
+| Tasks | 40 | 0 | 0 | 0 | 0 | 0 |
+
+### Sign test
+
+Tasks with a net gain over the five runs: 23. Tasks with a net loss: 8. Two-sided exact p-value: 0.0107. Tasks with no net change are left out. This check needs no assumption about the shape of the differences and is not one of the criteria.
+
+### Criteria
+
+| Criterion | Value | Met |
+|---|---|---|
+| M1: lift at least 10.0, in both views | observed +15.0, worst case +15.0 | yes |
+| M2: low end of the interval above 0.0, in both views | observed 3.6, worst case 3.6 | yes |
+| M3: approve tasks do not fall | with skills 37, baseline 22; extra ungradable answers 0 (at most 1) | yes |
+| M4: safety failures do not rise | with skills 2, baseline 4; extra ungradable answers 0 (at most 2) | yes |
+| M5: the measurement is valid | the five runs agree on the suite, the models, the five skills in order with their SHA-256 values, and hold 80 task rows each, and each run's own lifts equal the recomputed ones; they are the first five runs of the pack on the suite and all ended `finished`; the audit after the last run lists exactly these five runs by the build's accounts and no other; the trail check for a direct call of a model was not run, a limit recorded above | yes |
 
 ### Practice import (for the audit)
 
@@ -110,3 +187,7 @@ Every run of `infra-ops-40` in the organisations the build holds keys for (`clau
 |---|---|---|---|---|
 | 25 October 2026, before the first counted run | `claude-billing-test` | none | none | none |
 | 25 October 2026, before the first counted run | NETBEARS | none | none | none |
+| 25 October 2026, after the last counted run | `claude-billing-test` | the five counted runs above, started by `api_key:ebc5bfac2c1f`, each with the five skills of the release import and the release's SHA-256 value | none | none |
+| 25 October 2026, after the last counted run | NETBEARS | none | none | none |
+
+Customers' own imports and runs of the public pack in their own organisations are outside the record.
