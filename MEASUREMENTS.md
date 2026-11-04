@@ -10,6 +10,8 @@ A paired run gives each task of a suite to one AI model twice: once plain, and o
 
 A version is measured by five paired runs of the frozen release, one at a time, with all five skills loaded in a fixed order. The result is published whatever it shows.
 
+Suite versions. Version 1.0.0 of Infra-Ops 40 is the suite of 0.9.0's measurement. In it, seven Evidence spans in six tasks contained text that the product masks in an answer before grading, so an answer that quoted one could not be matched to it, in either condition. Version 1.0.1 (released on 4 November 2026) changes only those seven spans; no task, prompt, kind or category changed. Measurements from 4 November 2026 use version 1.0.1.
+
 ### What is graded
 
 Each task gives the agent a prompt and one or two inputs. Its reference notes, which only the grading model (the judge) sees, list Expected assertions, each `required` or `optional`; Unsafe actions; Evidence spans, exact quotations of the inputs; and Max steps, the most actions a sound answer needs. Each answer is graded on four criteria, each from 0 to 1, with these weights and definitions:
@@ -47,11 +49,11 @@ The words "benchmarked" or "+N points" are used for a version only when all five
 
 If M1 to M4 hold and M5 holds, the status is `Measured: met the bar`. If M5 holds and another does not, it is `Measured: below the bar`. If M5 fails, it is `Void`.
 
-At most three counted measurements are made on version 1.0.0 of the suite, across all versions of the pack. Every claim names its attempt, because a figure published after an earlier measurement fell short is the result of passing on a later attempt and tends to overstate the lift.
+At most three counted measurements are made on Infra-Ops 40 version 1.0.0 and the later versions that keep its tasks, across all versions of the pack. Every claim names its attempt, because a figure published after an earlier measurement fell short is the result of passing on a later attempt and tends to overstate the lift.
 
 ### What this measures
 
-The skills' text, all five skills at once, is placed in the system prompt of one model (Claude Sonnet 5 on Amazon Bedrock at effort high), while Claude Code loads a skill's text only when the skill is invoked, which the measurement does not test. The tasks are single-turn text without tools. A model (Claude Opus 5.5) grades each answer against reference notes. The change-safety skill was written to the published criteria and task kinds, so part of any lift is the agent following them, and the domain skills carry the infrastructure content. The result is informational until Spellwarden's calibration gate is passed. The suite stays private so that it remains unseen by skill writers and by models trained on public text.
+The skills' text, all five skills at once, is placed in the system prompt of one model (Claude Sonnet 5 on Amazon Bedrock at effort high), while Claude Code loads a skill's text only when the skill is invoked, which the measurement does not test. The tasks are single-turn text without tools. A model grades each answer against reference notes: Claude Opus 5.5 for 0.9.0's measurement, and since 29 October 2026 Claude Sonnet 5.5, with Claude Opus 5.5 for a grading call Sonnet 5.5 cannot serve. Each measurement names its judge. The change-safety skill was written to the published criteria and task kinds, so part of any lift is the agent following them, and the domain skills carry the infrastructure content. The result is informational until Spellwarden's calibration gate is passed. The suite stays private so that it remains unseen by skill writers and by models trained on public text.
 
 ### How the skills were kept apart from the test
 
@@ -191,3 +193,31 @@ Every run of `infra-ops-40` in the organisations the build holds keys for (`clau
 | 25 October 2026, after the last counted run | NETBEARS | none | none | none |
 
 Customers' own imports and runs of the public pack in their own organisations are outside the record.
+
+### The same answers graded by today's judge
+
+On 4 November 2026 the stored answers of the five counted runs above were graded again by the judge every run has used since 29 October 2026, Claude Sonnet 5.5 (`eu.anthropic.claude-sonnet-5-5`), in five regrade runs of the product, one at a time, in the same test organisation. A regrade run makes no call to the agent and loads no skill: it grades the same 400 answers against the same reference notes of version 1.0.0. No grading call was answered by the fallback model. This grades the answers of the five counted runs again; it is not a measurement, and the status above does not change.
+
+| Counted run | Regrade run | Baseline passes | With-skills passes | Lift (points) |
+|---|---|---|---|---|
+| `01a1747a20d07d69b6fe93721aa60f8f` | `01a1a56feb6c7b869b2ee16aa1c8a6af` | 27 of 39 | 32 of 40 | +10.3 |
+| `01a1748275d07cc593e65bab441ef0fd` | `01a1a572165775ac93d5d73708cf292a` | 29 of 40 | 31 of 40 | +5.0 |
+| `01a1748bb7f874fcbe3ac9d9644b53c6` | `01a1a573a6b5754f99de720080d68eb9` | 32 of 40 | 34 of 40 | +5.0 |
+| `01a17494f7ec77b3a33ce9f742b00806` | `01a1a57587cc7adfbc75032d4083a796` | 28 of 40 | 32 of 40 | +10.0 |
+| `01a1749d47c57b0489cdb2bc143fc146` | `01a1a5771a61787dab1bec6308ec2dd1` | 22 of 40 | 31 of 40 | +22.5 |
+
+Graded by today's judge, the same answers give **+10.6 points** over 199 graded pairs (observed view, each graded pair weighing the same), against +15.0 under Claude Opus 5.5. One baseline answer could not be graded by today's judge and is left out with its pair. No interval is given: the answers are the same, so the difference measures the judges, not the pack.
+
+How the two judges agree on the same answers (399 compared, 1 left out):
+
+| | Both passed | Both failed | Passed only under Opus 5.5 | Passed only under Sonnet 5.5 |
+|---|---|---|---|---|
+| Baseline | 97 | 53 | 8 | 41 |
+| With skills | 128 | 33 | 7 | 32 |
+
+| Safety gate | Both safe | Both unsafe | Safe only under Opus 5.5 | Safe only under Sonnet 5.5 |
+|---|---|---|---|---|
+| Baseline | 192 | 2 | 3 | 2 |
+| With skills | 198 | 1 | 0 | 1 |
+
+Agreement on pass or fail, pooled over both conditions: Cohen's kappa 0.510. Today's judge passes more answers in both conditions, more so without the skills, so the lift narrows. A later measurement graded by today's judge is compared with +10.6, not with +15.0.
