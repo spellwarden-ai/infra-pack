@@ -5,6 +5,7 @@ import contextlib
 import io
 import json
 import unittest
+import zlib
 
 import support
 from support import TreeTestCase
@@ -13,12 +14,68 @@ import check_pack
 
 MARKET = ".claude-plugin/marketplace.json"
 PLUGIN = "plugins/infra-pack/.claude-plugin/plugin.json"
+ICON = "plugins/infra-pack/.claude-plugin/icon.png"
 SKILLS = "plugins/infra-pack/skills"
 
 
 class RepositoryTest(unittest.TestCase):
     def test_this_repository_passes(self) -> None:
         self.assertEqual([str(item) for item in check_pack.check_repo(support.REPO, {})], [])
+
+    def test_this_repository_has_the_plugin_icon(self) -> None:
+        # Without it the Claude plugin directory warns ICON_MISSING.
+        self.assertTrue((support.REPO / ICON).is_file())
+
+
+def png(width: int, height: int, *, pad: int = 0) -> bytes:
+    """A PNG signature and IHDR chunk of the given size; the icon rule reads no further."""
+    body = b"IHDR" + width.to_bytes(4, "big") + height.to_bytes(4, "big") + bytes([8, 6, 0, 0, 0])
+    chunk = len(body[4:]).to_bytes(4, "big") + body + zlib.crc32(body).to_bytes(4, "big")
+    return b"\x89PNG\r\n\x1a\n" + chunk + bytes(pad)
+
+
+class IconTest(TreeTestCase):
+    def write_icon(self, data: bytes) -> None:
+        self.build(with_skills=True)
+        (self.root / ICON).write_bytes(data)
+
+    def test_tree_without_an_icon_is_clean(self) -> None:
+        self.build(with_skills=True)
+        self.assertClean()
+
+    def test_square_png_icons_within_the_limits_are_clean(self) -> None:
+        for side in (512, 1024, 2048):
+            with self.subTest(side=side):
+                self.write_icon(png(side, side))
+                self.assertClean()
+
+    def test_icon_is_allowed_by_the_layout_rule(self) -> None:
+        self.write_icon(png(512, 512))
+        self.assertNotIn("layout", " ".join(self.failures()))
+
+    def test_icon_that_is_not_a_png(self) -> None:
+        for data in (b"<svg xmlns='http://www.w3.org/2000/svg'/>", b"RIFF\x00\x00\x00\x00WEBPVP8 ", b""):
+            with self.subTest(data=data[:8]):
+                self.write_icon(data)
+                self.assertRuleFailed("icon: not a PNG", ICON)
+
+    def test_icon_that_is_not_square(self) -> None:
+        self.write_icon(png(1024, 512))
+        self.assertRuleFailed("icon: must be square", ICON)
+
+    def test_icon_too_small_or_too_large(self) -> None:
+        for side in (256, 511, 2049, 4096):
+            with self.subTest(side=side):
+                self.write_icon(png(side, side))
+                self.assertRuleFailed("icon: sides must be 512 to 2048 pixels", ICON)
+
+    def test_icon_of_2_mb_or_more(self) -> None:
+        self.write_icon(png(512, 512, pad=2 * 1024 * 1024))
+        self.assertRuleFailed("icon: must be under 2 MB", ICON)
+
+    def test_other_files_beside_the_manifest_are_still_unexpected(self) -> None:
+        self.build(changes={"plugins/infra-pack/.claude-plugin/icon.svg": "<svg/>\n"})
+        self.assertRuleFailed("layout: unexpected file under plugins/", "plugins/infra-pack/.claude-plugin/icon.svg")
 
 
 class LayoutTest(TreeTestCase):

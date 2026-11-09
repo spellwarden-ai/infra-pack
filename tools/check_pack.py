@@ -20,6 +20,7 @@ import yaml
 from spellwarden_scan import FrontmatterError, mask_credentials, parse_frontmatter
 
 from pack_common import (
+    ICON_FILE,
     MARKETPLACE_FILE,
     PLUGIN_DIR,
     PLUGIN_FILE,
@@ -139,7 +140,7 @@ def check_layout(root: Path, env: Env) -> list[Failure]:
     for rel in required_files(skills_present):
         if not (root / rel).is_file():
             failures.append(Failure(rel, 1, "layout: required file is missing"))
-    allowed = {PLUGIN_FILE.as_posix()}
+    allowed = {PLUGIN_FILE.as_posix(), ICON_FILE.as_posix()}
     if skills_present:
         for name in SKILL_NAMES:
             rel = (SKILLS_DIR / name / "SKILL.md").as_posix()
@@ -284,6 +285,34 @@ def check_docs(root: Path, env: Env) -> list[Failure]:
                 if char in line:
                     failures.append(Failure(rel, number, f"docs: {reason}"))
     return failures
+
+
+ICON_MIN_SIDE = 512
+ICON_MAX_SIDE = 2048
+ICON_MAX_BYTES = 2 * 1024 * 1024
+PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
+
+
+def check_icon(root: Path, env: Env) -> list[Failure]:
+    """The plugin icon, when present, is what the Claude plugin directory accepts: a square PNG, 512 to 2048
+    pixels a side, under 2 MB. Only the PNG header is read, so the standard library is enough."""
+    rel = ICON_FILE.as_posix()
+    path = root / rel
+    if path.is_symlink() or not path.is_file():
+        return []
+    data = path.read_bytes()
+    if len(data) >= ICON_MAX_BYTES:
+        return [Failure(rel, 1, "icon: must be under 2 MB")]
+    # The signature, then the IHDR chunk: length (4 bytes), type (4), width (4), height (4).
+    if len(data) < 24 or not data.startswith(PNG_SIGNATURE) or data[12:16] != b"IHDR":
+        return [Failure(rel, 1, "icon: not a PNG")]
+    width = int.from_bytes(data[16:20], "big")
+    height = int.from_bytes(data[20:24], "big")
+    if width != height:
+        return [Failure(rel, 1, f"icon: must be square, is {width}x{height}")]
+    if not ICON_MIN_SIDE <= width <= ICON_MAX_SIDE:
+        return [Failure(rel, 1, f"icon: sides must be 512 to 2048 pixels, are {width}")]
+    return []
 
 
 def check_config(root: Path, env: Env) -> list[Failure]:
@@ -472,6 +501,7 @@ def check_tag(root: Path, env: Env) -> list[Failure]:
 
 CHECKS: tuple[Check, ...] = (
     check_layout,
+    check_icon,
     check_skill_filenames,
     check_manifests,
     check_config,
