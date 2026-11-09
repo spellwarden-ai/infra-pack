@@ -10,6 +10,9 @@ PLUGIN_DIR = Path("plugins") / PLUGIN_NAME
 SKILLS_DIR = PLUGIN_DIR / "skills"
 MARKETPLACE_FILE = Path(".claude-plugin") / "marketplace.json"
 PLUGIN_FILE = PLUGIN_DIR / ".claude-plugin" / "plugin.json"
+# The plugin's icon, where the Claude plugin directory looks for one: a square PNG, 512 to 2048 pixels a side,
+# under 2 MB. The directory takes it as the listing icon only the first time the plugin is saved or submitted.
+ICON_FILE = PLUGIN_DIR / ".claude-plugin" / "icon.png"
 
 # The five skills, in the order a counted run loads them (see MEASUREMENTS.md).
 SKILL_NAMES = (
