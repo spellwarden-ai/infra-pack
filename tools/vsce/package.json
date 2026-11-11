@@ -1,0 +1,7 @@
+{
+  "name": "infra-pack-vsce",
+  "private": true,
+  "description": "The pinned vsce that packages and publishes the VS Code extension. Install with npm ci --ignore-scripts.",
+  "license": "Apache-2.0",
+  "dependencies": {"@vscode/vsce": "4.1.0"}
+}

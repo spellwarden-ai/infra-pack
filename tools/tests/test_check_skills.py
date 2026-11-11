@@ -111,7 +111,7 @@ class FrontmatterTest(TreeTestCase):
         self.assertRuleFailed("version", FIRST)
 
     def test_version_follows_plugin_json(self) -> None:
-        files = {PLUGIN: support.dump(support.plugin("1.0.0"))}
+        files = {PLUGIN: support.dump(support.plugin("1.0.0")), "package.json": support.dump(support.extension("1.0.0"))}
         for name in support.SKILL_NAMES:
             files[f"{SKILLS}/{name}/SKILL.md"] = support.skill_text(name, version="1.0.0")
         self.build(changes=files)

@@ -13,6 +13,10 @@ PLUGIN_FILE = PLUGIN_DIR / ".claude-plugin" / "plugin.json"
 # The plugin's icon, where the Claude plugin directory looks for one: a square PNG, 512 to 2048 pixels a side,
 # under 2 MB. The directory takes it as the listing icon only the first time the plugin is saved or submitted.
 ICON_FILE = PLUGIN_DIR / ".claude-plugin" / "icon.png"
+# The VS Code extension: its manifest at the root (the extension root is the repository root, so the five skills are
+# contributed from where they are) and the README the Marketplace shows (packaged with vsce --readme-path).
+EXTENSION_FILE = Path("package.json")
+EXTENSION_README = Path("vscode") / "README.md"
 
 # The five skills, in the order a counted run loads them (see MEASUREMENTS.md).
 SKILL_NAMES = (
