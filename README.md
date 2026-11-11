@@ -1,6 +1,6 @@
 # Spellwarden Infra Pack
 
-Five agent skills for infrastructure operations, packaged as a plugin marketplace for Claude Code. They are free, open source (Apache-2.0) and published by Spellwarden.
+Five agent skills for infrastructure operations, packaged as a plugin marketplace for Claude Code and as an extension for VS Code. They are free, open source (Apache-2.0) and published by Spellwarden.
 
 The pack helps an agent, and the engineer working with it, review infrastructure changes and incidents with care: reach the right decision, ask for a person's approval before anything destructive, and point to the evidence.
 
@@ -21,6 +21,14 @@ claude plugin install infra-pack@spellwarden
 ```
 
 The pin matters. Released skills reach the `main` branch only in a release commit that raises the version, and a version pin keeps you on the text that was checked.
+
+In VS Code 1.109 or later, install [Spellwarden Infra Pack](https://marketplace.visualstudio.com/items?itemName=spellwarden.infra-pack) (`spellwarden.infra-pack`) from the Visual Studio Marketplace, or from a shell, pinned the same way:
+
+```
+code --install-extension spellwarden.infra-pack@0.9.0
+```
+
+The agent loads a skill when your request matches its description. To ask for one by name, type `/` in chat and pick it.
 
 ## What each skill covers
 
@@ -60,6 +68,8 @@ The checks and tests need only the virtual environment above:
 ```
 
 `tools/lift.py` recomputes a published measurement from the evaluation runs it came from. It uses only the Python standard library.
+
+A release commit raises the version in `plugin.json`, in every SKILL.md and in `package.json` together. Its tag `v<x.y.z>` also publishes the VS Code extension to the Visual Studio Marketplace (`.github/workflows/publish-vscode.yml`, trusted publishing, no stored token), once `tools/check_vsix.py` has checked that the package holds exactly the released files.
 
 ## Licence and security
 

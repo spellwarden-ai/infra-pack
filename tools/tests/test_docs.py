@@ -52,6 +52,8 @@ class ReadmeTest(unittest.TestCase):
         self.assertIn("/plugin marketplace add spellwarden-ai/infra-pack#v0.9.0", text)
         self.assertIn("/plugin install infra-pack@spellwarden", text)
         self.assertIn("claude plugin marketplace add spellwarden-ai/infra-pack#v0.9.0", text)
+        version = json.loads(read("package.json"))["version"]
+        self.assertIn(f"code --install-extension spellwarden.infra-pack@{version}", text)
 
     def test_the_five_skills_and_the_single_file_sentence(self) -> None:
         text = read("README.md")
@@ -75,8 +77,12 @@ class ReadmeTest(unittest.TestCase):
         self.assertIn(f"| Observed (published) | {lift} | {low} to {high} |", read("MEASUREMENTS.md"))
 
     def test_links_point_at_files_that_exist(self) -> None:
+        # A relative link names a file of the repository; the only absolute one is the extension's Marketplace page.
         for target in re.findall(r"\]\(([^)#]+)\)", read("README.md")):
-            self.assertTrue((REPO / target).is_file(), target)
+            if target.startswith("https://"):
+                self.assertEqual(target, "https://marketplace.visualstudio.com/items?itemName=spellwarden.infra-pack")
+            else:
+                self.assertTrue((REPO / target).is_file(), target)
 
 
 class MarketplaceReadmeTest(unittest.TestCase):
