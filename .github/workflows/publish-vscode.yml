@@ -1,0 +1,90 @@
+name: publish-vscode
+
+# Publishes the VS Code extension spellwarden.infra-pack to the Visual Studio Marketplace with trusted publishing
+# (OIDC): no token is stored. The Marketplace policy names this repository, this workflow file and the environment
+# vscode-marketplace, which only main and v* tags may use.
+#
+# A release tag v<x.y.z> publishes that version. A manual run publishes main's version, which is allowed because the
+# skills on main are always the text of the latest release; check_vsix refuses a package whose skills differ from
+# the tag of its version.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-vscode
+  cancel-in-progress: false
+
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Create the virtual environment
+        run: python3 -m venv .venv
+      - name: Install the pinned tools
+        run: .venv/bin/pip install --require-hashes -r tools/requirements.txt
+      - name: Check the pack
+        run: .venv/bin/python tools/check_pack.py
+      - name: Run the tests
+        run: .venv/bin/python -m unittest discover -s tools/tests
+      - name: Read the version
+        id: version
+        run: echo "version=$(jq -r .version plugins/infra-pack/.claude-plugin/plugin.json)" >> "$GITHUB_OUTPUT"
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
+        with:
+          node-version: "22"
+      - name: Install the pinned vsce
+        run: npm ci --prefix tools/vsce --ignore-scripts --no-audit --no-fund
+      - name: Package the extension
+        run: tools/vsce/node_modules/.bin/vsce package --no-dependencies --readme-path vscode/README.md --out "infra-pack-${VERSION}.vsix"
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+      - name: Check the package against the checkout and the release tag
+        run: .venv/bin/python tools/check_vsix.py "infra-pack-${VERSION}.vsix" --release-ref "refs/tags/v${VERSION}"
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+      - name: Keep the package
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: vsix
+          path: infra-pack-${{ steps.version.outputs.version }}.vsix
+          if-no-files-found: error
+
+  publish:
+    needs: package
+    runs-on: ubuntu-24.04
+    environment: vscode-marketplace
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
+        with:
+          node-version: "22"
+      - name: Install the pinned vsce
+        run: npm ci --prefix tools/vsce --ignore-scripts --no-audit --no-fund
+      - name: Fetch the checked package
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          name: vsix
+      - name: Publish with trusted publishing
+        run: tools/vsce/node_modules/.bin/vsce publish --oidc --skip-duplicate --packagePath "infra-pack-${VERSION}.vsix"
+        env:
+          VERSION: ${{ needs.package.outputs.version }}

@@ -20,6 +20,8 @@ import yaml
 from spellwarden_scan import FrontmatterError, mask_credentials, parse_frontmatter
 
 from pack_common import (
+    EXTENSION_FILE,
+    EXTENSION_README,
     ICON_FILE,
     MARKETPLACE_FILE,
     PLUGIN_DIR,
@@ -66,10 +68,28 @@ EXPECTED_PLUGIN = {
     "keywords": ["terraform", "kubernetes", "iam", "ci", "infrastructure"],
 }
 
+# Every key and value of the VS Code extension's package.json except the version, which equals plugin.json's.
+# The extension contributes the five skills from where they are, in the order of SKILL_NAMES.
+EXPECTED_EXTENSION = {
+    "name": "infra-pack",
+    "displayName": "Spellwarden Infra Pack",
+    "description": EXPECTED_PLUGIN["description"],
+    "publisher": "spellwarden",
+    "license": "Apache-2.0",
+    "icon": ICON_FILE.as_posix(),
+    "homepage": "https://github.com/spellwarden-ai/infra-pack",
+    "repository": {"type": "git", "url": "https://github.com/spellwarden-ai/infra-pack.git"},
+    "bugs": {"url": "https://github.com/spellwarden-ai/infra-pack/issues"},
+    "engines": {"vscode": "^1.109.0"},
+    "categories": ["AI", "Chat"],
+    "keywords": EXPECTED_PLUGIN["keywords"],
+    "contributes": {"chatSkills": [{"path": f"./{(SKILLS_DIR / name / 'SKILL.md').as_posix()}"} for name in SKILL_NAMES]},
+}
+
 EXPECTED_CONFIG = {"version": 1, "telemetry": False}
 
 # Prose that is published: no em dash, no en dash, no exclamation mark.
-DOC_FILES = ("README.md", "MEASUREMENTS.md", "CHANGELOG.md", "SECURITY.md")
+DOC_FILES = ("README.md", "MEASUREMENTS.md", "CHANGELOG.md", "SECURITY.md", EXTENSION_README.as_posix())
 VERSION_RE = re.compile(r"\d+\.\d+\.\d+")
 TAG_RE = re.compile(r"refs/tags/v(\d+\.\d+\.\d+)")
 NAME_RE = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
@@ -106,6 +126,8 @@ def required_files(skills_present: bool) -> tuple[str, ...]:
         "tools/pack_common.py",
         "tools/requirements.txt",
         "LICENSE",
+        EXTENSION_FILE.as_posix(),
+        ".vscodeignore",
         *DOC_FILES,
     )
     # SOURCES.md lists the public pages the skills were written from, so it exists with the skills.
@@ -271,6 +293,31 @@ def check_manifests(root: Path, env: Env) -> list[Failure]:
             failures.extend(_differences_as_failures(rel, text, rest, EXPECTED_PLUGIN))
         else:
             failures.append(Failure(rel, 1, "manifest: the document must be an object"))
+    failures.extend(_check_extension(root))
+    return failures
+
+
+def _check_extension(root: Path) -> list[Failure]:
+    """The VS Code extension's package.json: the expected manifest, at the version of plugin.json."""
+    failures: list[Failure] = []
+    rel = EXTENSION_FILE.as_posix()
+    if not (root / rel).is_file():
+        return failures  # check_layout reports the missing file
+    loaded = _load_json(root, rel, failures)
+    if loaded is None:
+        return failures
+    data, text = loaded
+    failures.extend(_check_layout_of_json(rel, text))
+    if not isinstance(data, dict):
+        return [*failures, Failure(rel, 1, "manifest: the document must be an object")]
+    version, line = data.get("version"), _line_of(text, '"version"')
+    plugin_version = _plugin_version(root)
+    if not isinstance(version, str) or VERSION_RE.fullmatch(version) is None:
+        failures.append(Failure(rel, line, "manifest: version must be a string x.y.z"))
+    elif plugin_version is not None and version != plugin_version:
+        failures.append(Failure(rel, line, f"version: {version} differs from plugin.json {plugin_version}"))
+    rest = {key: value for key, value in data.items() if key != "version"}
+    failures.extend(_differences_as_failures(rel, text, rest, EXPECTED_EXTENSION))
     return failures
 
 

@@ -2,3 +2,5 @@
 __pycache__/
 *.pyc
 scan.json
+node_modules/
+*.vsix

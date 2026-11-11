@@ -2,19 +2,22 @@
 published. The repository's own files are read; nothing is written."""
 from __future__ import annotations
 
+import json
 import re
 import unittest
 
 import support
 
 REPO = support.REPO
-SKIPPED = {".git", ".venv", "__pycache__", "plans"}  # docs/plans holds the build plan and is never published
+# docs/plans holds the build plan and is never published; node_modules is the local install of the pinned vsce.
+SKIPPED = {".git", ".venv", "__pycache__", "plans", "node_modules"}
 
 
 def published_files():
     for path in sorted(REPO.rglob("*")):
         parts = path.relative_to(REPO).parts
-        if path.is_file() and not (set(parts) & SKIPPED) and path.suffix != ".pyc" and path.name != "scan.json":
+        if (path.is_file() and not (set(parts) & SKIPPED) and path.suffix not in (".pyc", ".vsix")
+                and path.name != "scan.json"):
             yield path
 
 
@@ -31,7 +34,7 @@ def version_status(version: str) -> str:
     return found.group(1) if found else ""
 
 class DocumentShapeTest(unittest.TestCase):
-    NAMES = ("README.md", "MEASUREMENTS.md", "CHANGELOG.md", "SECURITY.md")
+    NAMES = ("README.md", "MEASUREMENTS.md", "CHANGELOG.md", "SECURITY.md", "vscode/README.md")
 
     def test_each_document_starts_with_a_title(self) -> None:
         for name in self.NAMES:
@@ -74,6 +77,42 @@ class ReadmeTest(unittest.TestCase):
     def test_links_point_at_files_that_exist(self) -> None:
         for target in re.findall(r"\]\(([^)#]+)\)", read("README.md")):
             self.assertTrue((REPO / target).is_file(), target)
+
+
+class MarketplaceReadmeTest(unittest.TestCase):
+    """vscode/README.md, the page the Visual Studio Marketplace shows. vsce packages it from vscode/, so a relative
+    link would break: every link is absolute."""
+
+    MEASURED = re.compile(r"Measured on [^\n]*? the (?:first|second|third) measurement of the pack on this suite\.")
+
+    def test_the_skills_table_is_the_one_of_the_readme(self) -> None:
+        rows = [[line for line in read(name).splitlines() if line.startswith("| `")] for name in ("README.md", "vscode/README.md")]
+        self.assertEqual(len(rows[0]), 5)
+        self.assertEqual(rows[1], rows[0])
+        self.assertIn("Each skill is a single SKILL.md: no scripts, nothing that runs.", read("vscode/README.md"))
+
+    def test_its_measurement_follows_the_readme_and_names_its_conditions(self) -> None:
+        text, status = read("vscode/README.md"), version_status("0.9.0")
+        if status != "Measured: met the bar":
+            self.assertIsNone(re.search(r"benchmarked|[+-]\d+(\.\d+)? points", text, re.IGNORECASE))
+            return
+        readme_line = self.MEASURED.search(read("README.md"))
+        self.assertIsNotNone(readme_line)
+        self.assertIn(readme_line.group(0), text)
+        self.assertIn("The measurement put all five skills in the instructions of one model, Claude Sonnet 5.", text)
+        self.assertIn("It was not made in VS Code, where the agent loads a skill only when a request matches it.", text)
+        self.assertIn("(https://github.com/spellwarden-ai/infra-pack/blob/main/MEASUREMENTS.md)", text)
+
+    def test_every_link_is_absolute_and_points_at_this_repository(self) -> None:
+        targets = re.findall(r"\]\(([^)]+)\)", read("vscode/README.md"))
+        self.assertTrue(targets)
+        for target in targets:
+            self.assertTrue(target.startswith("https://github.com/spellwarden-ai/infra-pack"), target)
+
+    def test_the_vs_code_version_is_the_one_package_json_requires(self) -> None:
+        engine = json.loads(read("package.json"))["engines"]["vscode"]
+        self.assertEqual(engine, "^1.109.0")
+        self.assertIn("VS Code 1.109 or later", read("vscode/README.md"))
 
 
 class MeasurementsTest(unittest.TestCase):

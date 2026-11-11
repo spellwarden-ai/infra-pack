@@ -16,6 +16,7 @@ MARKET = ".claude-plugin/marketplace.json"
 PLUGIN = "plugins/infra-pack/.claude-plugin/plugin.json"
 ICON = "plugins/infra-pack/.claude-plugin/icon.png"
 SKILLS = "plugins/infra-pack/skills"
+EXTENSION = "package.json"
 
 
 class RepositoryTest(unittest.TestCase):
@@ -165,8 +166,68 @@ class ManifestTest(TreeTestCase):
                 self.assertRuleFailed("manifest", PLUGIN)
 
     def test_version_may_change_without_failing_the_manifest_rule(self) -> None:
-        self.build(with_skills=False, changes={PLUGIN: support.dump(support.plugin("1.2.3"))})
+        self.build(with_skills=False, changes={PLUGIN: support.dump(support.plugin("1.2.3")),
+                                               EXTENSION: support.dump(support.extension("1.2.3"))})
         self.assertClean()
+
+
+class ExtensionManifestTest(TreeTestCase):
+    """The VS Code extension's package.json."""
+
+    def test_the_valid_manifest_is_clean(self) -> None:
+        self.build(with_skills=False)
+        self.assertClean()
+
+    def test_it_is_required(self) -> None:
+        self.build(with_skills=False, changes={EXTENSION: None})
+        self.assertRuleFailed("layout", EXTENSION)
+
+    def test_the_vscodeignore_file_is_required(self) -> None:
+        self.build(with_skills=False, changes={".vscodeignore": None})
+        self.assertRuleFailed("layout", ".vscodeignore")
+
+    def test_the_marketplace_readme_is_required_and_follows_the_prose_rules(self) -> None:
+        self.build(with_skills=False, changes={"vscode/README.md": None})
+        self.assertRuleFailed("layout", "vscode/README.md")
+        self.build(with_skills=False, changes={"vscode/README.md": "# Title\n\nGreat news!\n"})
+        self.assertRuleFailed("docs", "vscode/README.md")
+
+    def test_version_must_equal_plugin_json(self) -> None:
+        self.build(with_skills=False, changes={EXTENSION: support.dump(support.extension("0.9.1"))})
+        self.assertRuleFailed("version", EXTENSION)
+
+    def test_version_must_be_x_y_z(self) -> None:
+        self.build(with_skills=False, changes={EXTENSION: support.dump(support.extension("0.9"))})
+        self.assertRuleFailed("manifest", EXTENSION)
+
+    def test_another_publisher_fails(self) -> None:
+        data = support.extension()
+        data["publisher"] = "someone-else"
+        self.build(with_skills=False, changes={EXTENSION: support.dump(data)})
+        self.assertRuleFailed("manifest", EXTENSION)
+
+    def test_the_skills_are_the_five_in_their_order(self) -> None:
+        data = support.extension()
+        skills = data["contributes"]["chatSkills"]
+        self.assertEqual([entry["path"] for entry in skills],
+                         [f"./{SKILLS}/{name}/SKILL.md" for name in support.SKILL_NAMES])
+        for changed in (skills[:4], [skills[1], skills[0], *skills[2:]], [*skills, {"path": "./other/SKILL.md"}]):
+            with self.subTest(skills=changed):
+                self.build(with_skills=False, changes={EXTENSION: support.dump({**data, "contributes": {"chatSkills": changed}})})
+                self.assertRuleFailed("manifest", EXTENSION)
+
+    def test_a_script_or_an_entry_point_is_not_allowed(self) -> None:
+        for key, value in (("main", "./extension.js"), ("scripts", {"postinstall": "node x.js"}),
+                           ("activationEvents", ["*"])):
+            with self.subTest(key=key):
+                self.build(with_skills=False, changes={EXTENSION: support.dump({**support.extension(), key: value})})
+                self.assertRuleFailed("manifest", EXTENSION)
+
+    def test_this_repository_matches_the_plugin(self) -> None:
+        data = json.loads((support.REPO / EXTENSION).read_text(encoding="utf-8"))
+        plugin = json.loads((support.REPO / PLUGIN).read_text(encoding="utf-8"))
+        self.assertEqual(data["version"], plugin["version"])
+        self.assertEqual(data["description"], plugin["description"])
 
     def test_invalid_json(self) -> None:
         self.build(with_skills=False, changes={MARKET: '{"name": \n'})

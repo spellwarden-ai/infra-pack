@@ -35,6 +35,14 @@ def plugin(version: str = "0.9.0") -> dict:
     return {**copy.deepcopy(check_pack.EXPECTED_PLUGIN), "version": version}
 
 
+def extension(version: str = "0.9.0") -> dict:
+    """The VS Code extension's package.json, in the key order of the real one (name, displayName, description,
+    version first)."""
+    data = copy.deepcopy(check_pack.EXPECTED_EXTENSION)
+    head = {key: data.pop(key) for key in ("name", "displayName", "description")}
+    return {**head, "version": version, **data}
+
+
 def dump(data: object) -> str:
     return json.dumps(data, indent=2) + "\n"
 
@@ -62,6 +70,7 @@ def valid_files(with_skills: bool = True) -> dict[str, str]:
     files = {
         ".claude-plugin/marketplace.json": dump(marketplace()),
         "plugins/infra-pack/.claude-plugin/plugin.json": dump(plugin()),
+        "package.json": dump(extension()),
         ".spellwarden/config.yml": "version: 1\ntelemetry: false\n",
     }
     for rel in check_pack.required_files(with_skills):

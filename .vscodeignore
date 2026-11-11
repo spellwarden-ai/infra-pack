@@ -1,0 +1,8 @@
+# The VS Code extension ships the manifest, the licence, the changelog, the icon and the five skills, nothing else.
+# vsce adds the README from vscode/README.md (--readme-path). tools/check_vsix.py checks the package's file list.
+**
+!package.json
+!LICENSE
+!CHANGELOG.md
+!plugins/infra-pack/.claude-plugin/icon.png
+!plugins/infra-pack/skills/*/SKILL.md
