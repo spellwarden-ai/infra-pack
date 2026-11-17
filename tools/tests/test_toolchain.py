@@ -49,8 +49,14 @@ class RequirementsTest(unittest.TestCase):
                 found[current] = []
         return found
 
-    def test_exactly_the_two_pins(self) -> None:
-        self.assertEqual(sorted(self.entries()), ["pyyaml==6.0.3", "spellwarden==1.2.1"])
+    def test_exactly_the_pins_of_the_engine_and_its_dependencies(self) -> None:
+        self.assertEqual(sorted(self.entries()), [
+            "cffi==2.1.1 ; platform_python_implementation != 'PyPy'",
+            "cryptography==50.0.2",
+            "pycparser==3.12 ; implementation_name != 'PyPy' and platform_python_implementation != 'PyPy'",
+            "pyyaml==6.0.3",
+            "spellwarden==1.17.0",
+        ])
 
     def test_every_pin_has_sha256_hashes(self) -> None:
         for pin, hashes in self.entries().items():
@@ -60,13 +66,14 @@ class RequirementsTest(unittest.TestCase):
                     self.assertRegex(value, r"^[0-9a-f]{64}$")
 
     def test_the_engine_wheel_and_sdist_are_listed(self) -> None:
-        listed = self.entries()["spellwarden==1.2.1"]
-        self.assertIn("1db3c9d549e66985a36a79825997525684c526192a5a7de28fe3bda8594d2663", listed)
-        self.assertIn("8e33e731e258d9b6e1003a6a0835f595fc51b4651264353a0864b95c9f847605", listed)
+        listed = self.entries()["spellwarden==1.17.0"]
+        self.assertIn("5cf88cde76ba2ec22eb0be4155966362a2aceeff0844825dd14eaac15ed33cc0", listed)
+        self.assertIn("e28354402c9ce1b99167f786683e1ec4321538f4421505d49a333a620a5c167c", listed)
 
     def test_the_environment_runs_the_pinned_versions(self) -> None:
-        self.assertEqual(metadata.version("spellwarden"), "1.2.1")
+        self.assertEqual(metadata.version("spellwarden"), "1.17.0")
         self.assertEqual(metadata.version("PyYAML"), "6.0.3")
+        self.assertEqual(metadata.version("cryptography"), "50.0.2")
 
 
 class EngineTest(unittest.TestCase):

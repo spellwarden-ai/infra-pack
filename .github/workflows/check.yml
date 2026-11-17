@@ -35,7 +35,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Scan with the Spellwarden action
-        uses: spellwarden-ai/scan@653350861eac5f98938eeaba0b91bf7143b83ddd  # v1.2.1
+        uses: spellwarden-ai/scan@d24b8212eb0f9031f10096301ed1211dcdb16a27  # v1.17.0
         with:
           fail-on: low
           comment: "false"
@@ -47,5 +47,5 @@ jobs:
         run: .venv/bin/pip install --require-hashes -r tools/requirements.txt
       - name: Scan again and write the report
         run: .venv/bin/spellwarden scan . --format json --output scan.json --fail-on low
-      - name: Check the report lists exactly the five skills
+      - name: Check the report lists exactly the five skills, also in its description lint
         run: .venv/bin/python tools/check_scan.py scan.json

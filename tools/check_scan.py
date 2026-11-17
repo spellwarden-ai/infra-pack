@@ -7,8 +7,16 @@ This check reads the report and requires: exactly the five skill directories of 
 skills, no item under `tools/`, no finding and no error. Before the skills exist (the skeleton
 state of the repository), it requires no skill instead.
 
+With the skills in place it also requires the report's description lint (scanner 1.17.0 or later):
+the `lint` list, which holds one entry `{"skill", "notes", "left_out"}` for every skill the scanner
+linted, an empty list of notes included, must name exactly the five skill directories of the layout,
+each once. A report without `lint` comes from an older scanner and fails. The notes themselves are
+informational and never fail the check: each is printed to stderr as `<skill>: <id>: <message>`, so
+the CI log shows them. In the skeleton state the lint is not required.
+
 Usage: `python tools/check_scan.py [--root DIR] scan.json`. One line per failure as
-`<path>:<line>: <rule>`; exit 1 on any failure, 2 when the report cannot be read, else 0."""
+`<path>:<line>: <rule>` on stdout, one line per lint note on stderr; exit 1 on any failure, 2 when
+the report cannot be read, else 0."""
 from __future__ import annotations
 
 import argparse
@@ -54,7 +62,62 @@ def check_report(report: object, root: Path, source: str = "scan.json") -> list[
     for error in report.get("errors") or []:
         code = error.get("code", "?") if isinstance(error, dict) else "?"
         failures.append(Failure(source, 1, f"scan: the scanner reported an error ({code})"))
+    if wanted:
+        failures += check_lint(report, wanted, source)
     return sorted(failures, key=lambda failure: (failure.path, failure.line, failure.rule))
+
+
+def lint_entries(report: dict) -> list[dict] | None:
+    """The entries of the report's description lint, or None when the report has no `lint` list."""
+    lint = report.get("lint")
+    if not isinstance(lint, list):
+        return None
+    return lint
+
+
+def is_linted_skill(entry: object) -> bool:
+    """An entry as the scanner writes one for a skill it linted: a skill path and a list of notes."""
+    return isinstance(entry, dict) and isinstance(entry.get("skill"), str) and isinstance(entry.get("notes"), list)
+
+
+def check_lint(report: dict, wanted: list[str], source: str) -> list[Failure]:
+    """The description lint must have run over exactly the skills of the layout. The scanner writes an
+    entry for every skill it linted, with an empty list of notes when a description triggers none, so
+    the set of entries is the set of skills the lint covered."""
+    entries = lint_entries(report)
+    if entries is None:
+        return [Failure(source, 1, "lint: the report has no description lint (scanner 1.17.0 or later writes one)")]
+    failures: list[Failure] = []
+    linted = [entry["skill"] for entry in entries if is_linted_skill(entry)]
+    for _ in range(len(entries) - len(linted)):
+        failures.append(Failure(source, 1, "lint: an entry of the description lint names no skill or has no list of notes"))
+    for path in sorted(set(wanted) - set(linted)):
+        failures.append(Failure(path, 1, "lint: the description lint did not cover this skill"))
+    for path in sorted(set(linted) - set(wanted)):
+        failures.append(Failure(path, 1, "lint: the description lint covered a skill the layout does not have"))
+    for path in sorted({path for path in linted if linted.count(path) > 1}):
+        failures.append(Failure(path, 1, "lint: the description lint listed this skill more than once"))
+    return failures
+
+
+def lint_note_lines(report: object) -> list[str]:
+    """One line per note of the description lint, `<skill>: <id>: <message>`, in the report's order, plus
+    one line for a skill whose notes the scanner capped. Informational: never a failure."""
+    entries = lint_entries(report) if isinstance(report, dict) else None
+    lines: list[str] = []
+    for entry in entries or []:
+        if not is_linted_skill(entry):
+            continue
+        for note in entry["notes"]:
+            note = note if isinstance(note, dict) else {}
+            line = f"{entry['skill']}: {note.get('id', '?')}: {note.get('message', '')}"
+            if note.get("other_path"):
+                line += f" (other skill: {note['other_path']})"
+            lines.append(line)
+        left_out = entry.get("left_out")
+        if isinstance(left_out, int) and left_out > 0:
+            lines.append(f"{entry['skill']}: {left_out} more note(s) were not kept in the report")
+    return lines
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -68,6 +131,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"check_scan: cannot read {args.report}: {exc}", file=sys.stderr)
         return 2
     failures = check_report(report, args.root, args.report.name)
+    for line in lint_note_lines(report):
+        print(f"check_scan: description lint (informational): {line}", file=sys.stderr)
     for failure in failures:
         print(failure)
     if failures:
