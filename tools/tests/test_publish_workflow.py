@@ -1,5 +1,5 @@
-"""The publish workflow: triggers, the environment and the OIDC permission only on the publish job, pins, and the
-package check before publishing. The file is parsed, not run."""
+"""The publish workflow: triggers, the environments and the OIDC permission only on the two publish jobs (Visual Studio
+Marketplace and Open VSX), pins, and the package check before publishing. The file is parsed, not run."""
 from __future__ import annotations
 
 import json
@@ -32,18 +32,24 @@ class PublishWorkflowTest(unittest.TestCase):
         triggers = self.data.get("on", self.data.get(True))  # YAML 1.1 reads a bare `on` as true
         self.assertEqual(triggers, {"push": {"tags": ["v*"]}, "workflow_dispatch": None})
 
-    def test_only_the_publish_job_can_ask_for_an_oidc_token(self) -> None:
+    def test_only_the_publish_jobs_can_ask_for_an_oidc_token(self) -> None:
         self.assertEqual(self.data["permissions"], {"contents": "read"})
         self.assertNotIn("permissions", self.jobs["package"])
-        self.assertEqual(self.jobs["publish"]["permissions"], {"contents": "read", "id-token": "write"})
+        for job in ("publish", "publish-openvsx"):
+            self.assertEqual(self.jobs[job]["permissions"], {"contents": "read", "id-token": "write"})
 
     def test_the_publish_job_runs_in_the_environment_the_marketplace_policy_names(self) -> None:
         self.assertEqual(self.jobs["publish"]["environment"], "vscode-marketplace")
         self.assertEqual(self.jobs["publish"]["needs"], "package")
         self.assertNotIn("environment", self.jobs["package"])
 
-    def test_two_jobs_on_ubuntu_24_04_and_no_parallel_publish(self) -> None:
-        self.assertEqual(sorted(self.jobs), ["package", "publish"])
+    def test_open_vsx_publishes_in_its_own_environment_once_switched_on(self) -> None:
+        job = self.jobs["publish-openvsx"]
+        self.assertEqual((job["environment"], job["needs"]), ("openvsx", "package"))
+        self.assertEqual(job["if"], "vars.OPENVSX_ENABLED == 'true'")
+
+    def test_three_jobs_on_ubuntu_24_04_and_no_parallel_publish(self) -> None:
+        self.assertEqual(sorted(self.jobs), ["package", "publish", "publish-openvsx"])
         for job in self.jobs.values():
             self.assertEqual(job["runs-on"], "ubuntu-24.04")
         self.assertEqual(self.data["concurrency"], {"group": "publish-vscode", "cancel-in-progress": False})
@@ -86,3 +92,14 @@ class PublishWorkflowTest(unittest.TestCase):
         self.assertNotIn("VSCE_PAT", self.text)
         self.assertNotIn("secrets.", self.text)
         self.assertNotIn("vsce package", "\n".join(self.runs("publish")))
+
+    def test_open_vsx_publishes_the_same_checked_package_with_a_pinned_ovsx(self) -> None:
+        runs = self.runs("publish-openvsx")
+        self.assertIn("npm ci --prefix tools/ovsx --ignore-scripts --no-audit --no-fund", runs)
+        self.assertEqual(runs[-1], 'tools/ovsx/node_modules/.bin/ovsx publish "infra-pack-${VERSION}.vsix" --trusted-publishing --skip-duplicate')
+        self.assertNotIn("OVSX_PAT", self.text)
+        lock = json.loads((support.REPO / "tools" / "ovsx" / "package-lock.json").read_text(encoding="utf-8"))
+        self.assertEqual(lock["packages"]["node_modules/ovsx"]["version"], "1.4.0")
+        for name, entry in lock["packages"].items():
+            if name:
+                self.assertTrue(entry.get("integrity", "").startswith("sha512-"), name)

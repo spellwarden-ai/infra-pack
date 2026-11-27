@@ -1,0 +1,7 @@
+{
+  "name": "infra-pack-ovsx",
+  "private": true,
+  "description": "The pinned ovsx that publishes the packaged extension to Open VSX with trusted publishing. Install with npm ci --ignore-scripts.",
+  "license": "Apache-2.0",
+  "dependencies": {"ovsx": "1.4.0"}
+}
