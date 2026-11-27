@@ -55,7 +55,7 @@ class RequirementsTest(unittest.TestCase):
             "cryptography==50.0.2",
             "pycparser==3.12 ; implementation_name != 'PyPy' and platform_python_implementation != 'PyPy'",
             "pyyaml==6.0.3",
-            "spellwarden==1.26.0",
+            "spellwarden==1.27.0",
         ])
 
     def test_every_pin_has_sha256_hashes(self) -> None:
@@ -66,12 +66,12 @@ class RequirementsTest(unittest.TestCase):
                     self.assertRegex(value, r"^[0-9a-f]{64}$")
 
     def test_the_engine_wheel_and_sdist_are_listed(self) -> None:
-        listed = self.entries()["spellwarden==1.26.0"]
-        self.assertIn("17b06462fa194940b6241eaf88a7823ac1b8ad1ad0462bfc755e7c809a7bdeb3", listed)
-        self.assertIn("f591e5e0a0afecf4a4feedf9a56c0a8a5aac2868454c92302d72bf4d6f9dd331", listed)
+        listed = self.entries()["spellwarden==1.27.0"]
+        self.assertIn("4599bd812b8cda70b50c99587cd7c63bd3f6327a9bff0b543d8a230cec25740a", listed)
+        self.assertIn("580270fcc6877080746464304512889c859ecf3499f55456dd3c3cca7f5a23ec", listed)
 
     def test_the_environment_runs_the_pinned_versions(self) -> None:
-        self.assertEqual(metadata.version("spellwarden"), "1.26.0")
+        self.assertEqual(metadata.version("spellwarden"), "1.27.0")
         self.assertEqual(metadata.version("PyYAML"), "6.0.3")
         self.assertEqual(metadata.version("cryptography"), "50.0.2")
 
