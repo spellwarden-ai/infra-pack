@@ -35,7 +35,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Scan with the Spellwarden action
-        uses: spellwarden-ai/scan@d24b8212eb0f9031f10096301ed1211dcdb16a27  # v1.17.0
+        uses: spellwarden-ai/scan@c75a177e803dce58b9df9f7705e324128b89c5d3  # v1.26.0
         with:
           fail-on: low
           comment: "false"
