@@ -1,8 +1,10 @@
 name: publish-vscode
 
-# Publishes the VS Code extension spellwarden.infra-pack to the Visual Studio Marketplace with trusted publishing
-# (OIDC): no token is stored. The Marketplace policy names this repository, this workflow file and the environment
-# vscode-marketplace, which only main and v* tags may use.
+# Publishes the VS Code extension spellwarden.infra-pack to the Visual Studio Marketplace and to Open VSX, both with
+# trusted publishing (OIDC): no token is stored. The Marketplace policy names this repository, this workflow file and
+# the environment vscode-marketplace; the Open VSX trusted publisher of the namespace spellwarden names this
+# repository, this workflow file and the environment openvsx. Only main and v* tags may use either environment.
+# The Open VSX job runs once the repository variable OPENVSX_ENABLED is true, set after the trusted publisher exists.
 #
 # A release tag v<x.y.z> publishes that version. A manual run publishes main's version, which is allowed because the
 # skills on main are always the text of the latest release; check_vsix refuses a package whose skills differ from
@@ -86,5 +88,33 @@ jobs:
           name: vsix
       - name: Publish with trusted publishing
         run: tools/vsce/node_modules/.bin/vsce publish --oidc --skip-duplicate --packagePath "infra-pack-${VERSION}.vsix"
+        env:
+          VERSION: ${{ needs.package.outputs.version }}
+
+  publish-openvsx:
+    needs: package
+    if: vars.OPENVSX_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    environment: openvsx
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
+        with:
+          node-version: "22"
+      - name: Install the pinned ovsx
+        run: npm ci --prefix tools/ovsx --ignore-scripts --no-audit --no-fund
+      - name: Fetch the checked package
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          name: vsix
+      - name: Publish with trusted publishing
+        run: tools/ovsx/node_modules/.bin/ovsx publish "infra-pack-${VERSION}.vsix" --trusted-publishing --skip-duplicate
         env:
           VERSION: ${{ needs.package.outputs.version }}
