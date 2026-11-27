@@ -1,6 +1,6 @@
 # Hash-pinned for `pip install --require-hashes -r tools/requirements.txt`: every file of each pinned version on
 # PyPI, for every platform. Written with uv 0.11.25 from the repository root by
-#   printf 'pyyaml==6.0.3\nspellwarden==1.26.0\n' | uv 0.11.25pip compile - --universal --python-version 3.11 --generate-hashes --no-header --no-annotate --output-file tools/requirements.txt
+#   printf 'pyyaml==6.0.3\nspellwarden==1.27.0\n' | uv 0.11.25pip compile - --universal --python-version 3.11 --generate-hashes --no-header --no-annotate --output-file tools/requirements.txt
 # and these comment lines put back on top.
 cffi==2.1.1 ; platform_python_implementation != 'PyPy' \
     --hash=sha256:046bfc24911b37851ee1b51aab8bffe713d89c68c6a057b09484ce9fd5f69b4e \
@@ -240,6 +240,6 @@ pyyaml==6.0.3 \
     --hash=sha256:f7057c9a337546edc7973c0d3ba84ddcdf0daa14533c2065749c9075001090e6 \
     --hash=sha256:fa160448684b4e94d80416c0fa4aac48967a969efe22931448d853ada8baf926 \
     --hash=sha256:fc09d0aa354569bc501d4e787133afc08552722d3ab34836a80547331bb5d4a0
-spellwarden==1.26.0 \
-    --hash=sha256:17b06462fa194940b6241eaf88a7823ac1b8ad1ad0462bfc755e7c809a7bdeb3 \
-    --hash=sha256:f591e5e0a0afecf4a4feedf9a56c0a8a5aac2868454c92302d72bf4d6f9dd331
+spellwarden==1.27.0 \
+    --hash=sha256:4599bd812b8cda70b50c99587cd7c63bd3f6327a9bff0b543d8a230cec25740a \
+    --hash=sha256:580270fcc6877080746464304512889c859ecf3499f55456dd3c3cca7f5a23ec

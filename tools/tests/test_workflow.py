@@ -10,7 +10,7 @@ import support
 
 WORKFLOW = support.REPO / ".github" / "workflows" / "check.yml"
 CHECKOUT = "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1"
-SCAN = "spellwarden-ai/scan@c75a177e803dce58b9df9f7705e324128b89c5d3"
+SCAN = "spellwarden-ai/scan@55c03fb303f5a4248ff318717c900baf4d235c68"
 
 
 class WorkflowTest(unittest.TestCase):
@@ -43,7 +43,7 @@ class WorkflowTest(unittest.TestCase):
 
     def test_the_pins_are_the_expected_ones(self) -> None:
         self.assertIn(f"uses: {CHECKOUT}  # v7.0.1", self.text)
-        self.assertIn(f"uses: {SCAN}  # v1.26.0", self.text)
+        self.assertIn(f"uses: {SCAN}  # v1.27.0", self.text)
 
     def test_checkout_keeps_no_credentials(self) -> None:
         for job in ("pack", "scan"):
